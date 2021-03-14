@@ -233,8 +233,6 @@ TGeoManager *BuildDRichModel(Double_t r_entr = 210., Double_t r_exit = 210.) {
 //    world->AddNode(pipe, 1, (TGeoMatrix *) new TGeoTranslation(0, 0, z0));
 
 
-
-
     // VESSEL
     TGeoVolume *vessel = geom->MakeCons("ci_DRICH_Vessel", Air, dz_vessel, rin_vessel, rout0_vessel, rin_vessel, rout1_vessel,
                                         phi0_vessel, phi1_vessel);
@@ -315,3 +313,4 @@ void ci_DRICH_Model(Double_t r_entr = 210., Double_t r_exit = 210.) {
     pipe->Draw("same");
 
 }
+

@@ -1,6 +1,11 @@
 
 #include "ci_DRICH_Design.hh"
 #include "ci_DRICH_Config.hh"
+#include "ci_DRICH_Model.hh"
+
+#include "G4tgbVolumeMgr.hh"
+#include "G4tgrMessenger.hh"
+#include "G4tgbMaterialMgr.hh"
 
 #include <G4LogicalVolume.hh>
 #include <G4Tubs.hh>
@@ -11,34 +16,34 @@
 TGeoManager *BuildDRichModel(Double_t r_entr=210., Double_t r_exit=210.);
 
 void ci_DRICH_Design::Construct(ci_DRICH_Config cfg, G4Material* worldMaterial,  G4VPhysicalVolume *motherVolume) {
-    printf("\nBegin ci_DRICH volume \n");
 
-    ConstructionConfig = cfg;
+  fmt::print("\nBegin ci_DRICH volume \n");
 
-    // Create mother volume
-    Solid = new G4Tubs("ci_DRICH_GVol_Solid", cfg.RIn, cfg.ROut, cfg.ThicknessZ / 2., 0., 360 * deg);
-    Logic = new G4LogicalVolume(Solid, worldMaterial, "ci_DRICH_GVol_Logic");
-    Phys = new G4PVPlacement(0, G4ThreeVector(0, 0, cfg.PosZ), "ci_DRICH_GVol_Phys", Logic, motherVolume, false, 0);
-    fmt::print("Begin ci_DRICH volume {} {} {} {} \n",cfg.RIn, cfg.ROut, cfg.ThicknessZ, cfg.PosZ );
+  ConstructionConfig = cfg;
 
-    G4VisAttributes *outerVolumeVisAttr = new G4VisAttributes(G4Color(0., 0., 0.9, 0.5));
+  // Create mother volume
+  Solid = new G4Tubs("ci_DRICH_GVol_Solid", cfg.RIn, cfg.ROut, cfg.ThicknessZ / 2., 0., 360 * deg);
+  Logic = new G4LogicalVolume(Solid, worldMaterial, "ci_DRICH_GVol_Logic");
+  Phys = new G4PVPlacement(0, G4ThreeVector(0, 0, cfg.PosZ), "ci_DRICH_GVol_Phys", Logic, motherVolume, false, 0);
+  fmt::print("Begin ci_DRICH volume {} {} {} {} \n",cfg.RIn, cfg.ROut, cfg.ThicknessZ, cfg.PosZ );
 
-    outerVolumeVisAttr->SetForceSolid(true);
-    outerVolumeVisAttr->SetVisibility(true);
-    outerVolumeVisAttr->SetLineWidth(1);
-    outerVolumeVisAttr->SetForceSolid(true);
+  G4VisAttributes *outerVolumeVisAttr = new G4VisAttributes(G4Color(0., 0., 0.9, 0.5));
 
-    // Make this global volume - invisible
-    Logic->SetVisAttributes(G4VisAttributes::Invisible);
-
-    //Logic->SetVisAttributes(outerVolumeVisAttr);
-
-    PrintConfig();
+  outerVolumeVisAttr->SetForceSolid(true);
+  outerVolumeVisAttr->SetVisibility(true);
+  outerVolumeVisAttr->SetLineWidth(1);
+  outerVolumeVisAttr->SetForceSolid(true);
+  
+  // Make this global volume - invisible
+  Logic->SetVisAttributes(G4VisAttributes::Invisible);
+  
+  //Logic->SetVisAttributes(outerVolumeVisAttr);
+  
+  PrintConfig();
     
 }
 
-void ci_DRICH_Design::ConstructDetectors() {
-
+void ci_DRICH_Design::ConstructDetectorsOrig() {
 
     // Build detector geometry using ROOT function
     auto rich = BuildDRichModel();
@@ -46,6 +51,7 @@ void ci_DRICH_Design::ConstructDetectors() {
     // Import Geant4 geometry to VGM
     Geant4GM::Factory g4Factory;
     RootGM::Factory rtFactory;
+
     rich->cd("world/Vessel");
     auto vessel = rich->GetTopNode();
 
@@ -132,23 +138,90 @@ void ci_DRICH_Design::ConstructDetectors() {
 }
 
 
+void ci_DRICH_Design::ConstructDetectors() {
+
+  // 
+  fmt::print("ci_DRICH construction start here:\n");
+
+  auto aeroPO = new ciDRICHar(); // (optical) model parameters
+
+  auto cfg=ConstructionConfig;
+
+  // build detector by text file
+  G4tgbVolumeMgr* volmgr = G4tgbVolumeMgr::GetInstance();
+  volmgr->AddTextFile(cfg.model_file);
+
+  G4VPhysicalVolume* rVessel = volmgr->ReadAndConstructDetector();
+
+  // verbose
+  volmgr->DumpSummary();
+  volmgr->DumpG4SolidList();
+
+  Logic->AddDaughter(rVessel);
+
+  G4Material* aeroMat = G4tgbMaterialMgr::GetInstance()->FindBuiltG4Material("ciDRICHaerogelMat");
+
+  if (aeroMat == NULL) {
+    fmt::print("ERROR: Cannot retrieve aerogel mateiral in ci_DRICH\n");
+    // handle error
+  }
+  
+  double aeroDensity = aeroMat->GetDensity();
+  fmt::print("# Aerogel Density ; {}\n",aeroMat->GetDensity()/(g/cm3));
+  
+  G4MaterialPropertiesTable* aeroOpt = aeroMat->GetMaterialPropertiesTable();
+
+  if (aeroOpt == 0) {
+    fmt::print("No aerogel material properties table available, allocated a new one\n");
+    aeroOpt = new G4MaterialPropertiesTable();    
+  } else {
+    aeroOpt->DumpTable();
+  }
+
+  // get density from model
+
+  aeroPO->setOpticalParams(aeroOpt, aeroDensity, 3); // mode=3: use experimental data
+  
+  aeroMat->SetMaterialPropertiesTable(aeroOpt);
+
+  fmt::print("Loaded Aerogel Optical Properties:\n");
+  aeroOpt->DumpTable();
+
+  fmt::print("ci_DRICH Det Construction end here\n");
+  
+}
+
 void ci_DRICH_Design::PrintConfig() {
 
   auto cc=ConstructionConfig;
   
-  printf("# ===== ci_DRICH configuration (length in cm, angle in deg) ====\n");
+  fmt::print("# ===== ci_DRICH configuration (length in cm, angle in deg) ====\n");
 
-  printf("# Vessel Length and initial position along z: %f %f\n", cc.vessel_dz/cm, cc.vessel_z0/cm);
-  printf("# Vessel Radii (in, out0, out1): %f %f %f\n", cc.vessel_radius_in/cm, cc.vessel_radius_out0/cm, cc.vessel_radius_out1/cm);
+  /*
+    fmt::print("# Vessel_Z_Length             : {}\n", cc.vessel_dz/cm);
+    fmt::print("# Vessel_Z_Entrance_Window    : {}\n", cc.vessel_z0/cm);
+    fmt::print("# Vessel_Inner_Radius         : {}\n", cc.vessel_radius_in/cm);
+    fmt::print("# Vessel_Outer_Entrance_Radius: {}\n", cc.vessel_radius_out0/cm);
+    fmt::print("# Vessel_Outer_Exit_Radius    : {}\n", cc.vessel_radius_out1/cm);
 
-  printf("# Aerogel Thickness: %f\n", cc.aerogel_dz/cm);
-  printf("# Wavelength-filter Thickness: %f\n", cc.filter_dz/cm);
-  printf("# Mirror Radius: %f\n", cc.mirror_radius/cm);
-  printf("# Mirror Center (z and transverse): %f %f\n", cc.mirror_center_z/cm, cc.mirror_center_t/cm);
-  printf("# Mirror Aperture (theta): %f\n", cc.mirror_theta/deg);
-  printf("# Sensor Center (z and transverse): %f %f\n", cc.sensor_z/cm, cc.sensor_t/cm);
+    fmt::print("# Aerogel_Thickness           : {}\n", cc.aerogel_dz/cm);
+    fmt::print("# Acrylic_Filter_Thickness    : {}\n", cc.filter_dz/cm);
+    fmt::print("# Mirror_Radius               : {}\n", cc.mirror_radius/cm);
+    fmt::print("# Mirror_Center_Z             : {}\n", cc.mirror_center_z/cm);
+    fmt::print("# Mirror_Center_Transverse    : {}\n", cc.mirror_center_t/cm);
+    fmt::print("# Mirror_Theta_Aperture       : {}\n", cc.mirror_theta/deg);
+    fmt::print("# Sensor_Center_Z             : {}\n", cc.sensor_z/cm);
+    fmt::print("# Sensor_Center_Transverse    : {}\n", cc.sensor_t/cm);
+  */
 
-  printf("# Geometry file    : %s\n", cc.geometry_file.data());
-  printf("# Optical data file: %s\n", cc.optical_file.data());
+  fmt::print("# Model file    : {}\n", cc.model_file.data());
+  
+  fmt::print("# Aerogel_Refractive_Index    : {:.5f}\n", cc.aerogel_n);
+  fmt::print("# Acrylic_Filter_Threshold_Wavelength : {:.1f} nm\n", cc.filter_thr/nm);
+  fmt::print("# Gas_Refractive_Index        : {:.5f}\n", cc.gas_n);
+  fmt::print("# Reference_Wavelength        : {:.1f}\n", cc.wavelength_ref/nm);
+    
+
+  //  fmt::print("# Optical data file: {}\n", cc.optical_file.data());
 
 }
