@@ -1,7 +1,7 @@
 #ifndef G4E_CI_DRICH_MODEL_HH
 #define G4E_CI_DRICH_MODEL_HH
 
-
+#include <iostream>
 #include <G4PVDivision.hh>
 #include "G4RotationMatrix.hh"
 #include "G4Material.hh"
@@ -9,40 +9,174 @@
 #include "G4VisAttributes.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4MaterialPropertiesTable.hh"
- 
+#include "G4OpticalSurface.hh"
+#include "G4LogicalSkinSurface.hh"
+#include "G4tgbMaterialMgr.hh"
+#include "G4tgbVolumeMgr.hh"
+
 //#include "ci_DRICH_Config.hh"
 
 /*
  * Service Classes
  */
 
-// Aerogel
-class ciDRICHar {
+//
+// Generic optical parameters class
+//
+
+class ciDRICHOptics {
 
 public:
-
-  double *scaledE;
-  double *scaledN;
-  double *scaledA;
-  double *scaledS;
   
-  ciDRICHar() {
+  double *scaledE; // photon energies
+  double *scaledN; // real refractive index
+  double *scaledA; // absorption length
+  double *scaledS; // scattering length
+
+  double *scaledSE; // surface efficiency 
+  double *scaledSR;  // surface reflectivity
+  double *scaledIN; // imaginary refractive index
+
+  // Add optical properties either to material or volume surface
+  // matName: material name
+  // logVolName: logical volume name
+  // if name is "_NA_", properties are not applied to the corresponding component 
+  ciDRICHOptics(const G4String matName, const G4String logVolName) {
+
+    fmt::print("#=======================================================================\n");
+    fmt::print("# Set Optical Properties\n");
+    
+    materialName = matName;
+    logicalVName = logVolName;
+    
     scaledE=NULL;
     scaledN=NULL;
     scaledA=NULL;
     scaledS=NULL;
+
+    scaledSE = NULL;
+    scaledSR = NULL;
+    scaledIN = NULL;
+
+    if (matName != "_NA_") {
+
+      fmt::print("# Material {}\n",matName.data());
+
+      mat = G4tgbMaterialMgr::GetInstance()->FindBuiltG4Material(matName);
+
+      if (mat == NULL) {
+	pTable = NULL;
+	fmt::print("# ERROR: Cannot retrieve {} material in ci_DRICH\n",matName);
+	// handle error
+      } else {
+	pTable = mat->GetMaterialPropertiesTable();
+      }
+      
+      if (pTable == NULL) {
+	fmt::print("# No properties table available for {}, allocated a new one\n",matName);
+	pTable = new G4MaterialPropertiesTable();    
+      } else {
+	pTable->DumpTable();
+      }
+    }
+
+    if (logVolName != "_NA_") {
+      fmt::print("# Logical Volume {}\n",matName.data());
+      logVolume = G4tgbVolumeMgr::GetInstance()->FindG4LogVol(logVolName, 0);
+      if (logVolume == NULL) {
+	fmt::print("# ERROR: Cannot retrieve {} logical volume in ci_DRICH\n",logVolName);
+	// handle error
+      }
+    }
     
   };
   
-  ~ciDRICHar() {
-    if (scaledE != NULL) {
-      delete[] scaledE;
-      delete[] scaledN;
-      delete[] scaledA;
-      delete[] scaledS;
-    }
+  ~ciDRICHOptics() {
+
+    if (scaledE !=NULL) delete[] scaledE;
+    if (scaledN !=NULL) delete[] scaledN;
+    if (scaledA !=NULL) delete[] scaledA;
+    if (scaledS !=NULL) delete[] scaledS;
+
+    if (scaledSE !=NULL) delete[] scaledSE;
+    if (scaledSR !=NULL) delete[] scaledSR;
+    if (scaledIN !=NULL) delete[] scaledIN;
+
+  };
+
+  // dvalue and ivalue may represent different quantities depending on implementation
+  virtual int setOpticalParams(double dvalue) {};
+  virtual int setOpticalParams(int ivalue) {};
+  virtual int setOpticalParams(int ivalue, double dvalue) {};
+
+protected:
+
+  G4String materialName, logicalVName;
+  G4Material *mat;
+  G4LogicalVolume *logVolume; // used for skin surface
+    
+  G4MaterialPropertiesTable *pTable;
+  
+  double wl2e(double wl) { // wavelength to energy
+    return 1239.84193 * eV / (wl/nm); 
+  };
+
+  double e2wl(double e) { // energy to wavelength
+    return 1239.84193 *nm / (e / eV);
+  };
+
+  // add properties to the MaterialPropertiesTable and link to material
+  void setMatPropTable(int nEntries) {
+      
+    if (scaledN!=NULL) pTable->AddProperty("RINDEX",    scaledE, scaledN, nEntries)->SetSpline(true);
+    if (scaledA!=NULL) pTable->AddProperty("ABSLENGTH", scaledE, scaledA, nEntries)->SetSpline(true);
+    if (scaledS!=NULL) pTable->AddProperty("RAYLEIGH",  scaledE, scaledS, nEntries)->SetSpline(true);
+    //    pTable->AddConstProperty("SCINTILLATIONYIELD", 0. / MeV); // @@@ TBC @@@
+    //    pTable->AddConstProperty("RESOLUTIONSCALE", 1.0); // @@@ TBC @@@
+
+    mat->SetMaterialPropertiesTable(pTable);
+    fmt::print("# Optical Table for material {} with {} points:\n",materialName,nEntries);
+    pTable->DumpTable();
+    
   };
   
+  // allocate and add properties to the MaterialPropertiesTable
+  G4MaterialPropertiesTable *addSkinPropTable(int nE) {
+    
+    G4MaterialPropertiesTable *pTab = new G4MaterialPropertiesTable();
+    if (scaledSE !=NULL) pTab->AddProperty("EFFICIENCY", scaledE, scaledSE, nE);
+    if (scaledSR !=NULL) pTab->AddProperty("REFLECTIVITY", scaledE, scaledSR, nE);
+    if (scaledN !=NULL) pTab->AddProperty("REALRINDEX", scaledE, scaledN, nE);
+    if (scaledIN !=NULL) pTab->AddProperty("IMAGINARYRINDEX", scaledE, scaledIN, nE);
+    fmt::print("# Optical Table for volume {} with {} points:\n",materialName,nE);
+    pTab->DumpTable();
+    
+    return pTab;
+
+  };
+  
+  // Linear Interpolation method
+  double linint(double val, int n, const double* x, const double* y) {
+    if (val<=x[0]) return y[0];
+    if (val>=x[n-1]) return y[n-1];
+    for (int i=0;i<(n-1);i++) {
+      if ((val>=x[i]) && (val<x[i+1])) {
+	return (y[i+1]-y[i])/(x[i+1]-x[i])*(val-x[i])+y[i];
+      }
+    }
+    return 0.;
+  };
+  
+};
+
+//
+// Aerogel
+//
+class ciDRICHar : public ciDRICHOptics {
+
+public:
+
+  ciDRICHar(const G4String matName) : ciDRICHOptics(matName, "_NA_") {};
   //
   // Compute the refractive index, absorption length, scattering length for different energies points
   // 
@@ -54,8 +188,7 @@ public:
   //
   // data are scaled according to the input density of the aerogel
   //
-  //
-  int setOpticalParams(G4MaterialPropertiesTable* mpt, double density, int mode) {
+  int setOpticalParams(int mode) {
     
     const double aeroE[]= // energy : wavelenth 660 nm -> 200 nm
       { 1.87855*eV,1.96673*eV,2.05490*eV,2.14308*eV,2.23126*eV, 2.31943*eV,2.40761*eV,2.49579*eV,2.58396*eV,2.67214*eV,
@@ -87,10 +220,13 @@ public:
 
     const int nEntries = sizeof(aeroE)/sizeof(double);
 
+    double density = mat->GetDensity();
+    fmt::print("# Aerogel Density : {} g/cm3\n",density/(g/cm3));
+    
     double refn = density2refIndex(density); // use a n vs rho formula with provide n at 400 nm
     double refwl = 400*nm;
     
-    double refee = refwl/nm / 1239.84193 * eV; // reference energy
+    double refee = wl2e(refwl)/eV; // [eV] reference energy
     double an0 = linint(refee, nEntries, aeroE, aeroN);
     //    double aa0 = linint(refee, nEntries, aeroE, aeroA);
     //    double as0 = linint(refee, nEntries, aeroE, aeroS);
@@ -108,7 +244,7 @@ public:
     
     for (int i=0;i<nEntries;i++) {
       double ee = aeroE[i]; 
-      double wl = 1239.84193 / (ee/eV) * nm; // from eV to nm
+      double wl = e2wl(ee)/nm; // from Energy to nm
 
       switch (mode) {
       case 0:     // --- Vorobiev model
@@ -147,13 +283,9 @@ public:
 
     }
 
-    printf("Aerogel Refractive Index, Absorption and Scattering Lengths rescaled to density %f g/cm3, method: %d\n", density/g*cm3, mode);
+    fmt::print("# Aerogel Refractive Index, Absorption and Scattering Lengths rescaled to density {:.5f} g/cm3, method: {}\n", density/g*cm3, mode);
 
-    mpt->AddProperty("RINDEX",     scaledE, scaledN , nEntries)->SetSpline(true);
-    mpt->AddProperty("ABSLENGTH",  scaledE, scaledA, nEntries)->SetSpline(true);
-    mpt->AddProperty("RAYLEIGH",   scaledE, scaledS, nEntries)->SetSpline(true);
-    mpt->AddConstProperty("SCINTILLATIONYIELD", 0. / MeV); // TBC
-    mpt->AddConstProperty("RESOLUTIONSCALE", 1.0);
+    setMatPropTable(nEntries);
     
     return nEntries;
     
@@ -161,23 +293,6 @@ public:
   
 private:
 
-  // Linear Interpolation
-  double linint(double val, int n, const double* x, const double* y) {
-
-    if (val<=x[0]) return y[0];
-    if (val>=x[n-1]) return y[n-1];
-    
-    for (int i=0;i<(n-1);i++) {
-      if ((val>=x[i]) && (val<x[i+1])) {
-	return (y[i+1]-y[i])/(x[i+1]-x[i])*(val-x[i])+y[i];
-      }
-    }
-    
-    return 0.;
-    
-  }
-  
-  
   // Quartz (SiO2) Refractive index: https://refractiveindex.info/?shelf=main&book=SiO2&page=Malitson
   double riQuartz(double wl) { // wavelength   
     double x = wl / um;
@@ -229,6 +344,263 @@ private:
   }
   
 };
+
+//
+// Acrylic Filter
+//
+
+class ciDRICHfilter : public ciDRICHOptics {
   
+public:
+
+  ciDRICHfilter(const G4String matName) : ciDRICHOptics(matName, "_NA_") {};
+
+  // wlthr: threshold wavelength for low pass filter
+  // mode currently not used
+  int setOpticalParams(double wlthr) {
+
+    const double acryE[]= // energy : wavelenth 660 nm -> 200 nm
+      { 1.87855*eV,1.96673*eV,2.05490*eV,2.14308*eV,2.23126*eV, 2.31943*eV,2.40761*eV,2.49579*eV,2.58396*eV,2.67214*eV,
+	2.76032*eV,2.84849*eV,2.93667*eV,3.02485*eV,3.11302*eV, 3.20120*eV,3.28938*eV,3.37755*eV,3.46573*eV,3.55391*eV,
+	3.64208*eV,3.73026*eV,3.81844*eV,3.90661*eV,3.99479*eV, 4.08297*eV,4.17114*eV,4.25932*eV,4.34750*eV,4.43567*eV,
+	4.52385*eV,4.61203*eV,4.70020*eV,4.78838*eV,4.87656*eV, 4.96473*eV,5.05291*eV,5.14109*eV,5.22927*eV,5.31744*eV,
+	5.40562*eV,5.49380*eV,5.58197*eV,5.67015*eV,5.75833*eV, 5.84650*eV,5.93468*eV,6.02286*eV,6.11103*eV,6.19921*eV };
+
+    const double acryN[]= // refractive index
+      { 1.4902, 1.4907, 1.4913, 1.4918, 1.4924, 1.4930,  1.4936,  1.4942,  1.4948,  1.4954,
+	1.4960,  1.4965,  1.4971,  1.4977,  1.4983, 1.4991,  1.5002,  1.5017,  1.5017,  1.5017,
+	1.5017,  1.5017,  1.5017,  1.5017,  1.5017, 1.5017,  1.5017,  1.5017,  1.5017,  1.5017,
+	1.5017,  1.5017,  1.5017,  1.5017,  1.5017, 1.5017,  1.5017,  1.5017,  1.5017,  1.5017,
+	1.5017,  1.5017,  1.5017,  1.5017,  1.5017, 1.5017,  1.5017,  1.5017,  1.5017,  1.5017};
+    
+    const double acryA[]= // absorption length
+      { 14.8495*cm, 14.8495*cm, 14.8495*cm, 14.8495*cm, 14.8495*cm, 14.8495*cm, 14.8495*cm, 14.8495*cm, 14.8495*cm, 14.8495*cm,
+	14.8495*cm, 14.8495*cm, 14.8495*cm, 14.8495*cm, 14.8495*cm, 14.8495*cm, 14.8495*cm, 14.8494*cm, 14.8486*cm, 14.844*cm, 
+	14.8198*cm, 14.7023*cm, 14.1905*cm, 12.3674*cm, 8.20704*cm, 3.69138*cm, 1.33325*cm, 0.503627*cm, 0.23393*cm, 0.136177*cm,  
+	0.0933192*cm, 0.0708268*cm, 0.0573082*cm, 0.0483641*cm, 0.0420282*cm, 0.0373102*cm, 0.033662*cm, 0.0307572*cm, 0.0283899*cm, 0.0264235*cm, 
+	0.0247641*cm, 0.0233451*cm, 0.0221177*cm, 0.0210456*cm, 0.0201011*cm, 0.0192627*cm, 0.0185134*cm, 0.0178398*cm, 0.0172309*cm, 0.0166779*cm };  
+
+    const int nEntries = sizeof(acryE)/sizeof(double);
+    
+    if (scaledE==NULL) {
+      scaledE = new double[nEntries];
+      scaledN = new double[nEntries];
+      scaledS = new double[nEntries];
+      scaledA = new double[nEntries];
+    }
+    
+    double e0 = acryE[24]; // wavelength corresponding to the above data threshold at about Half Maximum
+    double ethr= wl2e(wlthr);
+
+    int ithr=-1;
+    double eshift=0;
+    
+    for (int i=0;i<(nEntries-1);i++) { // find closest
+      double d1 = ethr-acryE[i];
+      if (d1>=0) { // good bin
+	ithr = i;
+	eshift = d1;
+      }
+      break;
+    }
+    if (ithr==-1) {
+      printf("ERROR filter: wavelength threshold %f nm is out of range\n",wlthr/nm);
+      return 0;
+    }
+	
+    for (int i=0;i<nEntries;i++) {
+      scaledE[i] = acryE[i]+eshift; // to maky ethr corresponds to a sampled point
+      scaledN[i] = linint((scaledE[i] - ethr + e0), nEntries, acryE, acryN);
+      scaledA[i] = linint((scaledE[i] - ethr + e0), nEntries, acryE, acryA); 
+      scaledS[i] = 100000.*cm; // @@@@
+    }
+
+    fmt::print("# Acrylic Filter Refractive Index, Absorption and Scattering Lengths rescaled to wavelength threshold {:.1f} nm\n", wlthr/nm);
+
+    setMatPropTable(nEntries);
+    
+    return nEntries;
+    
+  };
+
+private:
+
+  
+};
+
+//
+// gas
+//
+
+class ciDRICHgas : public ciDRICHOptics {
+
+public:
+
+  ciDRICHgas(const G4String matName) : ciDRICHOptics(matName, "_NA_") {};
+  
+  // igas: 0 = C2F6, 1 = CF4 gas !!!!
+  int setOpticalParams(int igas) {
+
+    if (igas>2) igas=0;
+    
+    // very approximate values
+    const double gasE[] =
+      { 2*eV, 2.5*eV, 3*eV, 3.5*eV, 4*eV, 4.5*eV, 5*eV, 5.5*eV, 6*eV, 6.5*eV, 7*eV};
+    const double gasN[] = // (n-1)*10^6
+      { 823., 829., 835., 843., 852., 863., 875., 889., 905., 923., 943.};
+    const double gasA[] =
+      { 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm};   
+
+    // A.W. Burner and W. K. Goad - Measurement of the Specific Refractivities of CF4 and C2F6
+    // for gases: n-1 = K*rho : K=specific refractivity or Gladstone-Dale constant
+    // C2F6: rho = 5.7 kg/m^3, K=0.131 cm^3/g +/- 0.0009 cm^3/g at 300 K, lambda=633 nm
+    // CF4:  rho = 7.2 kg/m^3, K=0.122 cm^3/g +/- 0.0009 cm^3/g at 300 K, lambda=633 nm   
+    double Ksr[]={ 0.131*cm3/g, 0.122*cm3/g };
+
+    double density = mat->GetDensity();
+    double refn = Ksr[igas] * density + 1.;
+    double wlref = 633*nm; // for density vs refractive index
+    
+    // One term Sellmeier formula: n-1 = A*10^-6 / (l0^-2 - l^-2)
+    // C2F6: A=0.18994, l0 = 65.47 [nm] (wavelength, E0=18.82 eV)  :  NIMA 354 (1995) 417-418
+    // CF4: A=0.124523, l0=61.88 nm (E0=20.04 eV) : NIMA 292 (1990) 593-594
+    double Asel[]={0.18994, 0.124523};
+    double L0sel[]={65.47*nm, 61.88*nm};
+    
+    int nEntries = 10;
+    double wl0 = 200.*nm;
+    double wl1 = 700.*nm;
+    double dwl = (wl1-wl0)/(nEntries-1.);
+    
+    if (scaledE==NULL) {
+      scaledE = new double[nEntries];
+      scaledN = new double[nEntries];
+      scaledS = new double[nEntries];
+      scaledA = new double[nEntries];
+    }
+
+    double l02 = 1./(L0sel[igas]/nm)/(L0sel[igas]/nm);
+      
+    double rnscale = Asel[igas]/1e6/(l02 - 1./(wlref/nm)/(wlref/nm))+1.;
+    
+    for (int i=0;i<nEntries;i++) {
+
+      double wl = wl1 - i*dwl; // to get increasing energy
+      double ee = wl2e(wl);
+
+      scaledE[i]=ee;
+      scaledN[i]=(Asel[igas]/1e6/(l02 - 1./(wl/nm)/(wl/nm))+1.) * refn/rnscale;
+      scaledA[i]=100.*cm;    // @@@@
+      scaledS[i]=100000.*cm; // @@@@
+    }
+
+    printf("Gas Refractive Index, Absorption and Scattering Lengths rescaled to density %f g/cm3, gas index: %d\n", density/g*cm3, igas);
+
+    setMatPropTable(nEntries);
+    
+    return nEntries;
+
+  };
+
+};
+
+//
+// Mirror
+//
+
+class ciDRICHmir : public ciDRICHOptics {
+
+public:
+  ciDRICHmir(const G4String logName) : ciDRICHOptics("_NA_", logName) { };
+  
+  int setOpticalParams(int mode) {
+      
+    const double mirrorE[] =
+      { 2.04358*eV, 2.0664*eV, 2.09046*eV, 2.14023*eV, 2.16601*eV, 2.20587*eV, 2.23327*eV, 2.26137*eV, 
+	2.31972*eV, 2.35005*eV, 2.38116*eV, 2.41313*eV, 2.44598*eV, 2.47968*eV, 2.53081*eV, 2.58354*eV, 
+	2.6194*eV, 2.69589*eV, 2.73515*eV, 2.79685*eV, 2.86139*eV, 2.95271*eV, 3.04884*eV, 3.12665*eV, 
+	3.2393*eV, 3.39218*eV, 3.52508*eV, 3.66893*eV, 3.82396*eV, 3.99949*eV, 4.13281*eV, 4.27679*eV, 
+	4.48244*eV, 4.65057*eV, 4.89476*eV, 5.02774*eV, 5.16816*eV, 5.31437*eV, 5.63821*eV, 5.90401*eV, 
+	6.19921 };
+    
+    const double mirrorR[]= // Reflectivity of AlMgF2 coated on thermally shaped acrylic sheets, measured by AJRP, 10/01/2012:
+      { 0.8678125, 0.8651562, 0.8639063, 0.8637500, 0.8640625, 0.8645313, 0.8643750, 0.8656250,
+	0.8653125, 0.8650000, 0.8648437, 0.8638281, 0.8635156, 0.8631250, 0.8621875, 0.8617188,
+	0.8613281, 0.8610156, 0.8610938, 0.8616016, 0.8623047, 0.8637500, 0.8655859, 0.8673828,
+	0.8700586, 0.8741992, 0.8781055, 0.8825195, 0.8876172, 0.8937207, 0.8981836, 0.9027441,
+	0.9078369, 0.9102002, 0.9093164, 0.9061743, 0.9004223, 0.8915210, 0.8599536, 0.8208313,
+	0.7625024
+      };
+
+    const int nEntries = sizeof(mirrorE)/sizeof(double);
+
+    if (scaledE==NULL) {
+      scaledE = new double[nEntries];
+      scaledSR = new double[nEntries];
+    }
+    
+    for (int i=0;i<nEntries;i++) {
+      scaledE[i] = mirrorE[i];
+      scaledSR[i] = mirrorR[i];
+    }
+
+    G4MaterialPropertiesTable * pT = addSkinPropTable(nEntries);
+
+    G4OpticalSurface * pOps = new G4OpticalSurface("ciDRICHmirOptS", unified, polishedfrontpainted, dielectric_dielectric); // to be parametrized
+    pOps->SetMaterialPropertiesTable(pT);
+    
+    new G4LogicalSkinSurface("ciDRICHmirrorSurf", logVolume, pOps);
+
+    return nEntries;
+    
+    /*
+      $mir{"name"}         = "spherical_mirror";
+        $mir{"description"}  = "reflective mirrors for eic rich";
+        $mir{"type"}         = "dielectric_dielectric";
+        $mir{"finish"}       = "polishedfrontpainted";
+        $mir{"model"}        = "unified";
+        $mir{"border"}       = "SkinSurface";
+        $mir{"photonEnergy"} = arrayToString(@PhotonEnergyBin1);
+        $mir{"reflectivity"} = arrayToString(@Reflectivity1);
+        print_mir(\%configuration, \%mir);
+    */
+    
+    
+  };
+
+};
+
+//
+// photo sensor
+//
+  
+class ciDRICHphotosensor : public ciDRICHOptics {
+
+public:
+
+  // logName = ciDRICHpst logical volume of the photosensor in the dRICh geometry file
+  ciDRICHphotosensor(const G4String logName) : ciDRICHOptics("_NA_", logName) { };
+
+  // mode not used - TBC (from example extende/LXe)
+  int setOpticalParams(int mode) {
+    
+    double scaledE[] = {1.*eV, 7.*eV };
+    double scaledSE[] = {1.0, 1.0 };
+    double scaledN[] = {1.92, 1.92 };
+    double scaledIN[] = {1.69, 1.69 }; 
+
+    G4MaterialPropertiesTable * pT = addSkinPropTable(2);
+    
+    G4OpticalSurface * pOps = new G4OpticalSurface("ciDRICHpsoSurf", glisur, polished, dielectric_metal);
+    pOps->SetMaterialPropertiesTable(pT);
+    
+    new G4LogicalSkinSurface("ciDRICHpsSurf", logVolume, pOps); 
+
+    return 2;
+    
+  };
+
+};
+
 #endif //G4E_CI_DRICH_MODEL_HH
 

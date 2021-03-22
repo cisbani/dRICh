@@ -35,7 +35,7 @@
 
 :P aerogelN 1.02
 :P aerogelWL 400.*nm
-:P aerogelDensity 0.02
+:P aerogelDensity 0.1
 
 :P gasN 1.0008
 :P gasWL 400.*nm
@@ -81,9 +81,19 @@
       G4_AIR $airFractionInAerogel
       G4_SILICON_DIOXIDE $sio2FractionInAerogel
 
+// acrylic material to be improved
+:MIXT_BY_WEIGHT ciDRICHacrylicMat 1.19 2
+      G4_PLEXIGLASS 0.99
+      G4_POLYVINYL_ACETATE 0.01
+
 :MIXT_BY_NATOMS ciDRICHgasMat $gasDensity 2
       C 2
       F 6
+
+// acrylic material to be improved
+:MIXT_BY_WEIGHT ciDRICHmirrorMat 1.19 2
+      G4_PLEXIGLASS 0.99
+      G4_POLYVINYL_ACETATE 0.01
       
 // Solids and Logical Volume combined
 
@@ -93,10 +103,10 @@
 :VOLU ciDRICHaerogel CONS $aerogelInRadius $aerogelOutRadius $aerogelInRadius $aerogelOutRadius $aerogelThickness/2. $phiStart $phiDelta ciDRICHaerogelMat
 :COLOR ciDRICHaerogel 0.6 0.6 0.6 0.4
 
-:VOLU ciDRICHfilter CONS $aerogelInRadius $aerogelOutRadius $aerogelInRadius $aerogelOutRadius $acrylicFilterThickness/2. $phiStart $phiDelta G4_PLEXIGLASS
+:VOLU ciDRICHfilter CONS $aerogelInRadius $aerogelOutRadius $aerogelInRadius $aerogelOutRadius $acrylicFilterThickness/2. $phiStart $phiDelta ciDRICHacrylicMat
 :COLOR ciDRICHfilter 0.5 0.7 0.5 0.5
 
-:VOLU ciDRICHmirror SPHERE $mirrorInRadius $mirrorRadius $phiStart $phiDelta $mirrorTheta0 $mirrorThetaSpan G4_PLEXIGLASS
+:VOLU ciDRICHmirror SPHERE $mirrorInRadius $mirrorRadius $phiStart $phiDelta $mirrorTheta0 $mirrorThetaSpan ciDRICHmirrorMat
 //:VOLU ciDRICHmirror SPHERE $mirrorInRadius $mirrorRadius -30. 60. 10. 40. G4_PLEXIGLASS
 :COLOR ciDRICHmirror 0.5 0.5 0.8 0.2
 
@@ -291,7 +301,7 @@
 :ROTM R5 0. 0. 240.
 :ROTM R6 0. 0. 300.
 
-// Place volumes assembled petals)
+// Place volumes assembled petals
 :PLACE_ASSEMBLY ciDRICHpetal ciDRICHvessel R1 0. 0. 0.
 :PLACE_ASSEMBLY ciDRICHpetal ciDRICHvessel R2 0. 0. 0.
 :PLACE_ASSEMBLY ciDRICHpetal ciDRICHvessel R3 0. 0. 0.

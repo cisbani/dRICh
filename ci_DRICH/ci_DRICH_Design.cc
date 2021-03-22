@@ -138,12 +138,10 @@ void ci_DRICH_Design::ConstructDetectorsOrig() {
 }
 
 
-void ci_DRICH_Design::ConstructDetectors() {
+void ci_DRICH_Design::ConstructDetectors() {  // @@ need to move optical properties commands in dedicated classes
 
   // 
-  fmt::print("ci_DRICH construction start here:\n");
-
-  auto aeroPO = new ciDRICHar(); // (optical) model parameters
+  fmt::print("# >>>>>>>>> ci_DRICH construction start here:\n");
 
   auto cfg=ConstructionConfig;
 
@@ -159,35 +157,39 @@ void ci_DRICH_Design::ConstructDetectors() {
 
   Logic->AddDaughter(rVessel);
 
-  G4Material* aeroMat = G4tgbMaterialMgr::GetInstance()->FindBuiltG4Material("ciDRICHaerogelMat");
-
-  if (aeroMat == NULL) {
-    fmt::print("ERROR: Cannot retrieve aerogel mateiral in ci_DRICH\n");
-    // handle error
-  }
+  //-------------------------------
+  // Material Optical Properties
   
-  double aeroDensity = aeroMat->GetDensity();
-  fmt::print("# Aerogel Density ; {}\n",aeroMat->GetDensity()/(g/cm3));
+  //> Aerogel Optical Properties
+
+  auto aeroPO = new ciDRICHar("ciDRICHaerogelMat"); // (optical) model parameters
+  aeroPO->setOpticalParams(3); // mode=3: use experimental data  
+
+  //--------------------------------------
+  //> Acrylic Filter Optical Properties
+
+  //  fmt::print("# Acrylic Wavelength Threshold : {} nm\n",cfg.filter_thr/(nm));
+  auto acryPO = new ciDRICHfilter("ciDRICHacrylicMat"); // (optical) model parameters
+  acryPO->setOpticalParams(cfg.filter_thr);
+
+  //--------------------------------
+  //> Gas radiator optical properties
+
+
+  //--------------------------------
+  // Surfaces optical properties
+
+  //> photo sensors 
+
+  auto photoSensor = new ciDRICHphotosensor("ciDRICHpst"); 
+  photoSensor->setOpticalParams(0);
+
+  //> mirror (simular to photosensor, but different params
+
+  auto mirror = new ciDRICHmir("ciDRICHmirror"); 
+  mirror->setOpticalParams(0);
   
-  G4MaterialPropertiesTable* aeroOpt = aeroMat->GetMaterialPropertiesTable();
-
-  if (aeroOpt == 0) {
-    fmt::print("No aerogel material properties table available, allocated a new one\n");
-    aeroOpt = new G4MaterialPropertiesTable();    
-  } else {
-    aeroOpt->DumpTable();
-  }
-
-  // get density from model
-
-  aeroPO->setOpticalParams(aeroOpt, aeroDensity, 3); // mode=3: use experimental data
-  
-  aeroMat->SetMaterialPropertiesTable(aeroOpt);
-
-  fmt::print("Loaded Aerogel Optical Properties:\n");
-  aeroOpt->DumpTable();
-
-  fmt::print("ci_DRICH Det Construction end here\n");
+  fmt::print("# <<<<<<<<< ci_DRICH Det Construction end here\n");
   
 }
 
