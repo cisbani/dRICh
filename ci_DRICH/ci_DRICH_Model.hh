@@ -5,6 +5,7 @@
 #include <G4PVDivision.hh>
 #include "G4RotationMatrix.hh"
 #include "G4Material.hh"
+#include "G4Element.hh"
 #include "G4Color.hh"
 #include "G4VisAttributes.hh"
 #include "G4SystemOfUnits.hh"
@@ -81,7 +82,7 @@ public:
     }
 
     if (logVolName != "_NA_") {
-      fmt::print("# Logical Volume {}\n",matName.data());
+      fmt::print("# Logical Volume {}\n",logVolName.data());
       logVolume = G4tgbVolumeMgr::GetInstance()->FindG4LogVol(logVolName, 0);
       if (logVolume == NULL) {
 	fmt::print("# ERROR: Cannot retrieve {} logical volume in ci_DRICH\n",logVolName);
@@ -105,6 +106,7 @@ public:
   };
 
   // dvalue and ivalue may represent different quantities depending on implementation
+  virtual int setOpticalParams() {};
   virtual int setOpticalParams(double dvalue) {};
   virtual int setOpticalParams(int ivalue) {};
   virtual int setOpticalParams(int ivalue, double dvalue) {};
@@ -148,7 +150,7 @@ protected:
     if (scaledSR !=NULL) pTab->AddProperty("REFLECTIVITY", scaledE, scaledSR, nE);
     if (scaledN !=NULL) pTab->AddProperty("REALRINDEX", scaledE, scaledN, nE);
     if (scaledIN !=NULL) pTab->AddProperty("IMAGINARYRINDEX", scaledE, scaledIN, nE);
-    fmt::print("# Optical Table for volume {} with {} points:\n",materialName,nE);
+    fmt::print("# Optical Table for volume {} with {} points:\n",logicalVName,nE);
     pTab->DumpTable();
     
     return pTab;
@@ -172,11 +174,11 @@ protected:
 //
 // Aerogel
 //
-class ciDRICHar : public ciDRICHOptics {
+class ciDRICHaerogel : public ciDRICHOptics {
 
 public:
 
-  ciDRICHar(const G4String matName) : ciDRICHOptics(matName, "_NA_") {};
+  ciDRICHaerogel(const G4String matName) : ciDRICHOptics(matName, "_NA_") {};
   //
   // Compute the refractive index, absorption length, scattering length for different energies points
   // 
@@ -298,7 +300,7 @@ private:
     double x = wl / um;
     double nn = sqrt(1+0.6961663*x*x/(x*x-pow(0.0684043,2))+0.4079426*x*x/(x*x-pow(0.1162414,2))+0.8974794*x*x/(x*x-pow(9.896161,2)));
     if (nn<1.) {
-      printf("WARNING: estimated quartz refractive index is %f at wavelenght %f nm -> set to 1\n",nn,x);
+      fmt::print("# WARNING: estimated quartz refractive index is {} at wavelenght {} nm -> set to 1\n",nn,x);
       nn = 1.;
     }
     return nn;
@@ -309,7 +311,7 @@ private:
     double x = wl / um;
     double nn = 1.0+(0.05792105/(238.0185-1.0/x/x)+0.00167917/(57.362-1.0/x/x));
     if (nn<1.) {
-      printf("WARNING: estimated air refractive index is %f at wavelenght %f nm -> set to 1\n",nn,x);
+      fmt::print("# WARNING: estimated air refractive index is {} at wavelenght {} nm -> set to 1\n",nn,x);
       nn = 1.;
     }
     return nn;
@@ -404,7 +406,7 @@ public:
       break;
     }
     if (ithr==-1) {
-      printf("ERROR filter: wavelength threshold %f nm is out of range\n",wlthr/nm);
+      fmt::print("# ERROR filter: wavelength threshold {} nm is out of range\n",wlthr/nm);
       return 0;
     }
 	
@@ -436,36 +438,58 @@ class ciDRICHgas : public ciDRICHOptics {
 
 public:
 
-  ciDRICHgas(const G4String matName) : ciDRICHOptics(matName, "_NA_") {};
-  
-  // igas: 0 = C2F6, 1 = CF4 gas !!!!
-  int setOpticalParams(int igas) {
+  ciDRICHgas(const G4String matName) : ciDRICHOptics(matName, "_NA_") {
 
-    if (igas>2) igas=0;
+    int nel = mat->GetNumberOfElements(); 
+    fmt::print("# Gas material number of elements {}\n", nel);
+
+    chemFormula="";
     
+    for (int i=0;i<nel;i++) {  // extract chemical formula from gas material
+      auto ele = mat->GetElement(i);
+      fmt::print("# Element {} : Z {}  Name {} Atoms {}\n",i,ele->GetZ(),ele->GetSymbol(),mat->GetAtomsVector()[i]); 
+      chemFormula = chemFormula + ele->GetSymbol() + std::to_string(mat->GetAtomsVector()[i]);
+    }
+    fmt::print("# Chemical Formula : {}\n",chemFormula);
+    
+  };
+  
+  int setOpticalParams() {
+
     // very approximate values
     const double gasE[] =
-      { 2*eV, 2.5*eV, 3*eV, 3.5*eV, 4*eV, 4.5*eV, 5*eV, 5.5*eV, 6*eV, 6.5*eV, 7*eV};
+      { 2*eV, 2.5*eV, 3*eV, 3.5*eV, 4*eV, 4.5*eV, 5*eV, 5.5*eV, 6*eV, 6.5*eV, 7*eV };
     const double gasN[] = // (n-1)*10^6
-      { 823., 829., 835., 843., 852., 863., 875., 889., 905., 923., 943.};
+      { 823., 829., 835., 843., 852., 863., 875., 889., 905., 923., 943. };
     const double gasA[] =
-      { 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm};   
+      { 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm };
+
+    // different gas types parameters
+    G4String gasType[] = { "C2F6", "CF4" };
 
     // A.W. Burner and W. K. Goad - Measurement of the Specific Refractivities of CF4 and C2F6
     // for gases: n-1 = K*rho : K=specific refractivity or Gladstone-Dale constant
     // C2F6: rho = 5.7 kg/m^3, K=0.131 cm^3/g +/- 0.0009 cm^3/g at 300 K, lambda=633 nm
     // CF4:  rho = 7.2 kg/m^3, K=0.122 cm^3/g +/- 0.0009 cm^3/g at 300 K, lambda=633 nm   
     double Ksr[]={ 0.131*cm3/g, 0.122*cm3/g };
-
-    double density = mat->GetDensity();
-    double refn = Ksr[igas] * density + 1.;
-    double wlref = 633*nm; // for density vs refractive index
     
     // One term Sellmeier formula: n-1 = A*10^-6 / (l0^-2 - l^-2)
     // C2F6: A=0.18994, l0 = 65.47 [nm] (wavelength, E0=18.82 eV)  :  NIMA 354 (1995) 417-418
     // CF4: A=0.124523, l0=61.88 nm (E0=20.04 eV) : NIMA 292 (1990) 593-594
     double Asel[]={0.18994, 0.124523};
     double L0sel[]={65.47*nm, 61.88*nm};
+
+    int igas=0;
+
+    for (int i=0;i<2;i++) {
+      if (chemFormula == gasType[i]) igas=i;
+    }
+
+    fmt::print("# Selected gas index {} for gas {}\n",igas, chemFormula);
+    
+    double density = mat->GetDensity();
+    double refn = Ksr[igas] * density + 1.;
+    double wlref = 633*nm; // for density vs refractive index
     
     int nEntries = 10;
     double wl0 = 200.*nm;
@@ -494,7 +518,7 @@ public:
       scaledS[i]=100000.*cm; // @@@@
     }
 
-    printf("Gas Refractive Index, Absorption and Scattering Lengths rescaled to density %f g/cm3, gas index: %d\n", density/g*cm3, igas);
+    fmt::print("# Gas Refractive Index, Absorption and Scattering Lengths rescaled to density {} g/cm3, gas index: {}\n", density/g*cm3, igas);
 
     setMatPropTable(nEntries);
     
@@ -502,16 +526,20 @@ public:
 
   };
 
+private:
+
+  G4String chemFormula; // chemical formula of the gas material
+  
 };
 
 //
 // Mirror
 //
 
-class ciDRICHmir : public ciDRICHOptics {
+class ciDRICHmirror : public ciDRICHOptics {
 
 public:
-  ciDRICHmir(const G4String logName) : ciDRICHOptics("_NA_", logName) { };
+  ciDRICHmirror(const G4String logName) : ciDRICHOptics("_NA_", logName) { };
   
   int setOpticalParams(int mode) {
       
@@ -583,13 +611,25 @@ public:
 
   // mode not used - TBC (from example extende/LXe)
   int setOpticalParams(int mode) {
-    
-    double scaledE[] = {1.*eV, 7.*eV };
-    double scaledSE[] = {1.0, 1.0 };
-    double scaledN[] = {1.92, 1.92 };
-    double scaledIN[] = {1.69, 1.69 }; 
 
-    G4MaterialPropertiesTable * pT = addSkinPropTable(2);
+    double E[] = {1.*eV, 4.*eV, 7.*eV };
+    double SE[] = {1.0, 1.0, 1.0 };
+    double N[] = {1.92, 1.92, 1.92 };
+    double IN[] = {1.69, 1.69, 1.69 }; 
+
+    scaledE  = new double[3];
+    scaledSE = new double[3];
+    scaledN  = new double[3];
+    scaledIN = new double[3];
+
+    for (int i=0;i<3;i++) {
+      scaledE[i] = E[i];
+      scaledSE[i] = SE[i];
+      scaledN[i] = N[i];
+      scaledIN[i] = IN[i];
+    }
+    
+    G4MaterialPropertiesTable * pT = addSkinPropTable(3);
     
     G4OpticalSurface * pOps = new G4OpticalSurface("ciDRICHpsoSurf", glisur, polished, dielectric_metal);
     pOps->SetMaterialPropertiesTable(pT);

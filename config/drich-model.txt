@@ -1,4 +1,9 @@
 // Define the dRICH Geometry and Materials
+//
+//   dRICH mother volume is a conical vessel filled by the radiatore gas
+//   the vessel hosts 6 petals
+//   each petal has an aerogel radiator, an acrylic filter and a mirror
+//
 //   z axis is along beam pipe
 //   x axis is transverse to beam pipe
 //   reference dRICH petal has y=0
@@ -26,19 +31,15 @@
 :P vesselOutRadiusEntrance 210.*cm
 :P vesselOutRadiusExit 210.*cm
 
-:P phiStart -29.9
-:P phiDelta  59.8
+:P petalPhiStart -29.9
+:P petalPhiDelta  59.8
 
 :P aerogelThickness 4.*cm
 :P aerogelInRadius $vesselInRadius
 :P aerogelOutRadius 120.*cm
 
-:P aerogelN 1.02
-:P aerogelWL 400.*nm
 :P aerogelDensity 0.1
 
-:P gasN 1.0008
-:P gasWL 400.*nm
 :P gasDensity 0.005734
 
 :P acrylicFilterThickness 0.32*mm
@@ -100,19 +101,19 @@
 :VOLU ciDRICHvessel CONS $vesselInRadius $vesselOutRadiusEntrance $vesselInRadius $vesselOutRadiusExit $vesselLengthZ/2. 0. 360. ciDRICHgasMat
 :COLOR ciDRICHvessel 0.9 0.9 0.9 0.9
 
-:VOLU ciDRICHaerogel CONS $aerogelInRadius $aerogelOutRadius $aerogelInRadius $aerogelOutRadius $aerogelThickness/2. $phiStart $phiDelta ciDRICHaerogelMat
+:VOLU ciDRICHaerogel CONS $aerogelInRadius $aerogelOutRadius $aerogelInRadius $aerogelOutRadius $aerogelThickness/2. $petalPhiStart $petalPhiDelta ciDRICHaerogelMat
 :COLOR ciDRICHaerogel 0.6 0.6 0.6 0.4
 
-:VOLU ciDRICHfilter CONS $aerogelInRadius $aerogelOutRadius $aerogelInRadius $aerogelOutRadius $acrylicFilterThickness/2. $phiStart $phiDelta ciDRICHacrylicMat
+:VOLU ciDRICHfilter CONS $aerogelInRadius $aerogelOutRadius $aerogelInRadius $aerogelOutRadius $acrylicFilterThickness/2. $petalPhiStart $petalPhiDelta ciDRICHacrylicMat
 :COLOR ciDRICHfilter 0.5 0.7 0.5 0.5
 
-:VOLU ciDRICHmirror SPHERE $mirrorInRadius $mirrorRadius $phiStart $phiDelta $mirrorTheta0 $mirrorThetaSpan ciDRICHmirrorMat
+:VOLU ciDRICHmirror SPHERE $mirrorInRadius $mirrorRadius $petalPhiStart $petalPhiDelta $mirrorTheta0 $mirrorThetaSpan ciDRICHmirrorMat
 //:VOLU ciDRICHmirror SPHERE $mirrorInRadius $mirrorRadius -30. 60. 10. 40. G4_PLEXIGLASS
 :COLOR ciDRICHmirror 0.5 0.5 0.8 0.2
 
 // photo-sensor single tile
-:VOLU ciDRICHpst BOX $sensorTileLengthX/2. $sensorTileLengthY/2. $sensorTileThickness/2. G4_Si
-:COLOR ciDRICHpst 0.6 0.2 0.2 0.5
+:VOLU ciDRICHpsst BOX $sensorTileLengthX/2. $sensorTileLengthY/2. $sensorTileThickness/2. G4_Si
+:COLOR ciDRICHpsst 0.6 0.2 0.2 0.5
 
 // rotation around y axis
 //:ROTM RMIR (90.-$mirrorThetaRot/deg) 0. 90. 90. -$mirrorThetaRot/deg 0.
@@ -124,174 +125,174 @@
    ciDRICHaerogel R0 0. 0. $aerogelZ0
    ciDRICHfilter  R0 0. 0. $acrylicFilterZ0
    ciDRICHmirror  RMIR $mirrorCenterX 0. $mirrorCenterZ
-   ciDRICHpst R0 144.50*cm -27.50*cm -39.8816*cm
-   ciDRICHpst R0 144.50*cm -22.50*cm -39.1429*cm
-   ciDRICHpst R0 144.50*cm -17.50*cm -38.5000*cm
-   ciDRICHpst R0 144.50*cm -12.50*cm -37.9533*cm
-   ciDRICHpst R0 144.50*cm -7.50*cm -37.5000*cm
-   ciDRICHpst R0 144.50*cm -2.50*cm -37.5000*cm
-   ciDRICHpst R0 144.50*cm 2.50*cm -37.5000*cm
-   ciDRICHpst R0 144.50*cm 7.50*cm -37.5000*cm
-   ciDRICHpst R0 144.50*cm 12.50*cm -37.9878*cm
-   ciDRICHpst R0 144.50*cm 17.50*cm -38.5000*cm
-   ciDRICHpst R0 144.50*cm 22.50*cm -39.1774*cm
-   ciDRICHpst R0 144.50*cm 27.50*cm -39.8288*cm
-   ciDRICHpst R0 149.50*cm -27.50*cm -39.8974*cm
-   ciDRICHpst R0 149.50*cm -22.50*cm -39.2128*cm
-   ciDRICHpst R0 149.50*cm -17.50*cm -38.5000*cm
-   ciDRICHpst R0 149.50*cm -12.50*cm -38.3182*cm
-   ciDRICHpst R0 149.50*cm -7.50*cm -37.5000*cm
-   ciDRICHpst R0 149.50*cm -2.50*cm -37.5000*cm
-   ciDRICHpst R0 149.50*cm 2.50*cm -37.5000*cm
-   ciDRICHpst R0 149.50*cm 7.50*cm -37.5000*cm
-   ciDRICHpst R0 149.50*cm 12.50*cm -38.1933*cm
-   ciDRICHpst R0 149.50*cm 17.50*cm -38.5000*cm
-   ciDRICHpst R0 149.50*cm 22.50*cm -39.3169*cm
-   ciDRICHpst R0 149.50*cm 27.50*cm -39.8889*cm
-   ciDRICHpst R0 154.50*cm -27.50*cm -40.2363*cm
-   ciDRICHpst R0 154.50*cm -22.50*cm -39.4394*cm
-   ciDRICHpst R0 154.50*cm -17.50*cm -38.5854*cm
-   ciDRICHpst R0 154.50*cm -12.50*cm -38.4868*cm
-   ciDRICHpst R0 154.50*cm -7.50*cm -37.9079*cm
-   ciDRICHpst R0 154.50*cm -2.50*cm -37.5143*cm
-   ciDRICHpst R0 154.50*cm 2.50*cm -37.5116*cm
-   ciDRICHpst R0 154.50*cm 7.50*cm -37.8902*cm
-   ciDRICHpst R0 154.50*cm 12.50*cm -38.4833*cm
-   ciDRICHpst R0 154.50*cm 17.50*cm -38.6447*cm
-   ciDRICHpst R0 154.50*cm 22.50*cm -39.4744*cm
-   ciDRICHpst R0 154.50*cm 27.50*cm -40.1957*cm
-   ciDRICHpst R0 159.50*cm -27.50*cm -40.5440*cm
-   ciDRICHpst R0 159.50*cm -22.50*cm -39.6892*cm
-   ciDRICHpst R0 159.50*cm -17.50*cm -39.2500*cm
-   ciDRICHpst R0 159.50*cm -12.50*cm -38.5133*cm
-   ciDRICHpst R0 159.50*cm -7.50*cm -38.5000*cm
-   ciDRICHpst R0 159.50*cm -2.50*cm -38.4014*cm
-   ciDRICHpst R0 159.50*cm 2.50*cm -38.4605*cm
-   ciDRICHpst R0 159.50*cm 7.50*cm -38.5000*cm
-   ciDRICHpst R0 159.50*cm 12.50*cm -38.5256*cm
-   ciDRICHpst R0 159.50*cm 17.50*cm -39.2971*cm
-   ciDRICHpst R0 159.50*cm 22.50*cm -39.6176*cm
-   ciDRICHpst R0 159.50*cm 27.50*cm -40.5244*cm
-   ciDRICHpst R0 164.50*cm -32.50*cm -42.0248*cm
-   ciDRICHpst R0 164.50*cm -27.50*cm -41.0732*cm
-   ciDRICHpst R0 164.50*cm -22.50*cm -40.3526*cm
-   ciDRICHpst R0 164.50*cm -17.50*cm -39.6047*cm
-   ciDRICHpst R0 164.50*cm -12.50*cm -39.3261*cm
-   ciDRICHpst R0 164.50*cm -7.50*cm -38.8418*cm
-   ciDRICHpst R0 164.50*cm -2.50*cm -38.5652*cm
-   ciDRICHpst R0 164.50*cm 2.50*cm -38.5976*cm
-   ciDRICHpst R0 164.50*cm 7.50*cm -38.7278*cm
-   ciDRICHpst R0 164.50*cm 12.50*cm -39.3095*cm
-   ciDRICHpst R0 164.50*cm 17.50*cm -39.6728*cm
-   ciDRICHpst R0 164.50*cm 22.50*cm -40.3875*cm
-   ciDRICHpst R0 164.50*cm 27.50*cm -41.0682*cm
-   ciDRICHpst R0 164.50*cm 32.50*cm -42.0672*cm
-   ciDRICHpst R0 169.50*cm -32.50*cm -42.8929*cm
-   ciDRICHpst R0 169.50*cm -27.50*cm -41.8614*cm
-   ciDRICHpst R0 169.50*cm -22.50*cm -40.9891*cm
-   ciDRICHpst R0 169.50*cm -17.50*cm -40.3873*cm
-   ciDRICHpst R0 169.50*cm -12.50*cm -39.8034*cm
-   ciDRICHpst R0 169.50*cm -7.50*cm -39.5244*cm
-   ciDRICHpst R0 169.50*cm -2.50*cm -39.5000*cm
-   ciDRICHpst R0 169.50*cm 2.50*cm -39.5000*cm
-   ciDRICHpst R0 169.50*cm 7.50*cm -39.5147*cm
-   ciDRICHpst R0 169.50*cm 12.50*cm -39.8816*cm
-   ciDRICHpst R0 169.50*cm 17.50*cm -40.3831*cm
-   ciDRICHpst R0 169.50*cm 22.50*cm -40.9250*cm
-   ciDRICHpst R0 169.50*cm 27.50*cm -41.7706*cm
-   ciDRICHpst R0 169.50*cm 32.50*cm -42.7603*cm
-   ciDRICHpst R0 174.50*cm -32.50*cm -43.6143*cm
-   ciDRICHpst R0 174.50*cm -27.50*cm -42.7135*cm
-   ciDRICHpst R0 174.50*cm -22.50*cm -41.8521*cm
-   ciDRICHpst R0 174.50*cm -17.50*cm -41.2931*cm
-   ciDRICHpst R0 174.50*cm -12.50*cm -40.6972*cm
-   ciDRICHpst R0 174.50*cm -7.50*cm -40.4268*cm
-   ciDRICHpst R0 174.50*cm -2.50*cm -40.2746*cm
-   ciDRICHpst R0 174.50*cm 2.50*cm -40.2753*cm
-   ciDRICHpst R0 174.50*cm 7.50*cm -40.4589*cm
-   ciDRICHpst R0 174.50*cm 12.50*cm -40.7078*cm
-   ciDRICHpst R0 174.50*cm 17.50*cm -41.2179*cm
-   ciDRICHpst R0 174.50*cm 22.50*cm -41.9219*cm
-   ciDRICHpst R0 174.50*cm 27.50*cm -42.7051*cm
-   ciDRICHpst R0 174.50*cm 32.50*cm -43.7055*cm
-   ciDRICHpst R0 179.50*cm -32.50*cm -44.7877*cm
-   ciDRICHpst R0 179.50*cm -27.50*cm -43.7000*cm
-   ciDRICHpst R0 179.50*cm -22.50*cm -42.9865*cm
-   ciDRICHpst R0 179.50*cm -17.50*cm -42.1977*cm
-   ciDRICHpst R0 179.50*cm -12.50*cm -41.7208*cm
-   ciDRICHpst R0 179.50*cm -7.50*cm -41.5000*cm
-   ciDRICHpst R0 179.50*cm -2.50*cm -41.3395*cm
-   ciDRICHpst R0 179.50*cm 2.50*cm -41.2500*cm
-   ciDRICHpst R0 179.50*cm 7.50*cm -41.4277*cm
-   ciDRICHpst R0 179.50*cm 12.50*cm -41.8924*cm
-   ciDRICHpst R0 179.50*cm 17.50*cm -42.2439*cm
-   ciDRICHpst R0 179.50*cm 22.50*cm -42.9177*cm
-   ciDRICHpst R0 179.50*cm 27.50*cm -43.7317*cm
-   ciDRICHpst R0 179.50*cm 32.50*cm -44.6935*cm
-   ciDRICHpst R0 184.50*cm -37.50*cm -47.1707*cm
-   ciDRICHpst R0 184.50*cm -32.50*cm -45.9098*cm
-   ciDRICHpst R0 184.50*cm -27.50*cm -44.9598*cm
-   ciDRICHpst R0 184.50*cm -22.50*cm -44.1290*cm
-   ciDRICHpst R0 184.50*cm -17.50*cm -43.4425*cm
-   ciDRICHpst R0 184.50*cm -12.50*cm -42.9632*cm
-   ciDRICHpst R0 184.50*cm -7.50*cm -42.7024*cm
-   ciDRICHpst R0 184.50*cm -2.50*cm -42.5370*cm
-   ciDRICHpst R0 184.50*cm 2.50*cm -42.5290*cm
-   ciDRICHpst R0 184.50*cm 7.50*cm -42.7079*cm
-   ciDRICHpst R0 184.50*cm 12.50*cm -42.9878*cm
-   ciDRICHpst R0 184.50*cm 17.50*cm -43.4315*cm
-   ciDRICHpst R0 184.50*cm 22.50*cm -44.0000*cm
-   ciDRICHpst R0 184.50*cm 27.50*cm -44.9535*cm
-   ciDRICHpst R0 184.50*cm 32.50*cm -45.9400*cm
-   ciDRICHpst R0 184.50*cm 37.50*cm -47.0851*cm
-   ciDRICHpst R0 189.50*cm -37.50*cm -48.4783*cm
-   ciDRICHpst R0 189.50*cm -32.50*cm -47.3364*cm
-   ciDRICHpst R0 189.50*cm -27.50*cm -46.3452*cm
-   ciDRICHpst R0 189.50*cm -22.50*cm -45.5000*cm
-   ciDRICHpst R0 189.50*cm -17.50*cm -44.9111*cm
-   ciDRICHpst R0 189.50*cm -12.50*cm -44.2708*cm
-   ciDRICHpst R0 189.50*cm -7.50*cm -44.0802*cm
-   ciDRICHpst R0 189.50*cm -2.50*cm -43.9400*cm
-   ciDRICHpst R0 189.50*cm 2.50*cm -43.8951*cm
-   ciDRICHpst R0 189.50*cm 7.50*cm -44.0195*cm
-   ciDRICHpst R0 189.50*cm 12.50*cm -44.2778*cm
-   ciDRICHpst R0 189.50*cm 17.50*cm -44.9941*cm
-   ciDRICHpst R0 189.50*cm 22.50*cm -45.4518*cm
-   ciDRICHpst R0 189.50*cm 27.50*cm -46.3132*cm
-   ciDRICHpst R0 189.50*cm 32.50*cm -47.3400*cm
-   ciDRICHpst R0 189.50*cm 37.50*cm -48.4577*cm
-   ciDRICHpst R0 194.50*cm -37.50*cm -50.0741*cm
-   ciDRICHpst R0 194.50*cm -32.50*cm -48.8415*cm
-   ciDRICHpst R0 194.50*cm -27.50*cm -47.9337*cm
-   ciDRICHpst R0 194.50*cm -22.50*cm -47.1579*cm
-   ciDRICHpst R0 194.50*cm -17.50*cm -46.5000*cm
-   ciDRICHpst R0 194.50*cm -12.50*cm -45.9545*cm
-   ciDRICHpst R0 194.50*cm -7.50*cm -45.5141*cm
-   ciDRICHpst R0 194.50*cm -2.50*cm -45.3837*cm
-   ciDRICHpst R0 194.50*cm 2.50*cm -45.3286*cm
-   ciDRICHpst R0 194.50*cm 7.50*cm -45.5759*cm
-   ciDRICHpst R0 194.50*cm 12.50*cm -45.9706*cm
-   ciDRICHpst R0 194.50*cm 17.50*cm -46.3718*cm
-   ciDRICHpst R0 194.50*cm 22.50*cm -47.0385*cm
-   ciDRICHpst R0 194.50*cm 27.50*cm -47.8297*cm
-   ciDRICHpst R0 194.50*cm 32.50*cm -48.9684*cm
-   ciDRICHpst R0 194.50*cm 37.50*cm -49.9810*cm
-   ciDRICHpst R0 199.50*cm -37.50*cm -51.8222*cm
-   ciDRICHpst R0 199.50*cm -32.50*cm -50.6481*cm
-   ciDRICHpst R0 199.50*cm -27.50*cm -49.7245*cm
-   ciDRICHpst R0 199.50*cm -22.50*cm -48.6932*cm
-   ciDRICHpst R0 199.50*cm -17.50*cm -47.9651*cm
-   ciDRICHpst R0 199.50*cm -12.50*cm -47.6398*cm
-   ciDRICHpst R0 199.50*cm -7.50*cm -47.3116*cm
-   ciDRICHpst R0 199.50*cm -2.50*cm -47.0238*cm
-   ciDRICHpst R0 199.50*cm 2.50*cm -47.0000*cm
-   ciDRICHpst R0 199.50*cm 7.50*cm -47.2439*cm
-   ciDRICHpst R0 199.50*cm 12.50*cm -47.6026*cm
-   ciDRICHpst R0 199.50*cm 17.50*cm -48.1707*cm
-   ciDRICHpst R0 199.50*cm 22.50*cm -48.7421*cm
-   ciDRICHpst R0 199.50*cm 27.50*cm -49.6136*cm
-   ciDRICHpst R0 199.50*cm 32.50*cm -50.5816*cm
-   ciDRICHpst R0 199.50*cm 37.50*cm -51.7603*cm
+   ciDRICHpsst R0 144.50*cm -27.50*cm -39.8816*cm
+   ciDRICHpsst R0 144.50*cm -22.50*cm -39.1429*cm
+   ciDRICHpsst R0 144.50*cm -17.50*cm -38.5000*cm
+   ciDRICHpsst R0 144.50*cm -12.50*cm -37.9533*cm
+   ciDRICHpsst R0 144.50*cm -7.50*cm -37.5000*cm
+   ciDRICHpsst R0 144.50*cm -2.50*cm -37.5000*cm
+   ciDRICHpsst R0 144.50*cm 2.50*cm -37.5000*cm
+   ciDRICHpsst R0 144.50*cm 7.50*cm -37.5000*cm
+   ciDRICHpsst R0 144.50*cm 12.50*cm -37.9878*cm
+   ciDRICHpsst R0 144.50*cm 17.50*cm -38.5000*cm
+   ciDRICHpsst R0 144.50*cm 22.50*cm -39.1774*cm
+   ciDRICHpsst R0 144.50*cm 27.50*cm -39.8288*cm
+   ciDRICHpsst R0 149.50*cm -27.50*cm -39.8974*cm
+   ciDRICHpsst R0 149.50*cm -22.50*cm -39.2128*cm
+   ciDRICHpsst R0 149.50*cm -17.50*cm -38.5000*cm
+   ciDRICHpsst R0 149.50*cm -12.50*cm -38.3182*cm
+   ciDRICHpsst R0 149.50*cm -7.50*cm -37.5000*cm
+   ciDRICHpsst R0 149.50*cm -2.50*cm -37.5000*cm
+   ciDRICHpsst R0 149.50*cm 2.50*cm -37.5000*cm
+   ciDRICHpsst R0 149.50*cm 7.50*cm -37.5000*cm
+   ciDRICHpsst R0 149.50*cm 12.50*cm -38.1933*cm
+   ciDRICHpsst R0 149.50*cm 17.50*cm -38.5000*cm
+   ciDRICHpsst R0 149.50*cm 22.50*cm -39.3169*cm
+   ciDRICHpsst R0 149.50*cm 27.50*cm -39.8889*cm
+   ciDRICHpsst R0 154.50*cm -27.50*cm -40.2363*cm
+   ciDRICHpsst R0 154.50*cm -22.50*cm -39.4394*cm
+   ciDRICHpsst R0 154.50*cm -17.50*cm -38.5854*cm
+   ciDRICHpsst R0 154.50*cm -12.50*cm -38.4868*cm
+   ciDRICHpsst R0 154.50*cm -7.50*cm -37.9079*cm
+   ciDRICHpsst R0 154.50*cm -2.50*cm -37.5143*cm
+   ciDRICHpsst R0 154.50*cm 2.50*cm -37.5116*cm
+   ciDRICHpsst R0 154.50*cm 7.50*cm -37.8902*cm
+   ciDRICHpsst R0 154.50*cm 12.50*cm -38.4833*cm
+   ciDRICHpsst R0 154.50*cm 17.50*cm -38.6447*cm
+   ciDRICHpsst R0 154.50*cm 22.50*cm -39.4744*cm
+   ciDRICHpsst R0 154.50*cm 27.50*cm -40.1957*cm
+   ciDRICHpsst R0 159.50*cm -27.50*cm -40.5440*cm
+   ciDRICHpsst R0 159.50*cm -22.50*cm -39.6892*cm
+   ciDRICHpsst R0 159.50*cm -17.50*cm -39.2500*cm
+   ciDRICHpsst R0 159.50*cm -12.50*cm -38.5133*cm
+   ciDRICHpsst R0 159.50*cm -7.50*cm -38.5000*cm
+   ciDRICHpsst R0 159.50*cm -2.50*cm -38.4014*cm
+   ciDRICHpsst R0 159.50*cm 2.50*cm -38.4605*cm
+   ciDRICHpsst R0 159.50*cm 7.50*cm -38.5000*cm
+   ciDRICHpsst R0 159.50*cm 12.50*cm -38.5256*cm
+   ciDRICHpsst R0 159.50*cm 17.50*cm -39.2971*cm
+   ciDRICHpsst R0 159.50*cm 22.50*cm -39.6176*cm
+   ciDRICHpsst R0 159.50*cm 27.50*cm -40.5244*cm
+   ciDRICHpsst R0 164.50*cm -32.50*cm -42.0248*cm
+   ciDRICHpsst R0 164.50*cm -27.50*cm -41.0732*cm
+   ciDRICHpsst R0 164.50*cm -22.50*cm -40.3526*cm
+   ciDRICHpsst R0 164.50*cm -17.50*cm -39.6047*cm
+   ciDRICHpsst R0 164.50*cm -12.50*cm -39.3261*cm
+   ciDRICHpsst R0 164.50*cm -7.50*cm -38.8418*cm
+   ciDRICHpsst R0 164.50*cm -2.50*cm -38.5652*cm
+   ciDRICHpsst R0 164.50*cm 2.50*cm -38.5976*cm
+   ciDRICHpsst R0 164.50*cm 7.50*cm -38.7278*cm
+   ciDRICHpsst R0 164.50*cm 12.50*cm -39.3095*cm
+   ciDRICHpsst R0 164.50*cm 17.50*cm -39.6728*cm
+   ciDRICHpsst R0 164.50*cm 22.50*cm -40.3875*cm
+   ciDRICHpsst R0 164.50*cm 27.50*cm -41.0682*cm
+   ciDRICHpsst R0 164.50*cm 32.50*cm -42.0672*cm
+   ciDRICHpsst R0 169.50*cm -32.50*cm -42.8929*cm
+   ciDRICHpsst R0 169.50*cm -27.50*cm -41.8614*cm
+   ciDRICHpsst R0 169.50*cm -22.50*cm -40.9891*cm
+   ciDRICHpsst R0 169.50*cm -17.50*cm -40.3873*cm
+   ciDRICHpsst R0 169.50*cm -12.50*cm -39.8034*cm
+   ciDRICHpsst R0 169.50*cm -7.50*cm -39.5244*cm
+   ciDRICHpsst R0 169.50*cm -2.50*cm -39.5000*cm
+   ciDRICHpsst R0 169.50*cm 2.50*cm -39.5000*cm
+   ciDRICHpsst R0 169.50*cm 7.50*cm -39.5147*cm
+   ciDRICHpsst R0 169.50*cm 12.50*cm -39.8816*cm
+   ciDRICHpsst R0 169.50*cm 17.50*cm -40.3831*cm
+   ciDRICHpsst R0 169.50*cm 22.50*cm -40.9250*cm
+   ciDRICHpsst R0 169.50*cm 27.50*cm -41.7706*cm
+   ciDRICHpsst R0 169.50*cm 32.50*cm -42.7603*cm
+   ciDRICHpsst R0 174.50*cm -32.50*cm -43.6143*cm
+   ciDRICHpsst R0 174.50*cm -27.50*cm -42.7135*cm
+   ciDRICHpsst R0 174.50*cm -22.50*cm -41.8521*cm
+   ciDRICHpsst R0 174.50*cm -17.50*cm -41.2931*cm
+   ciDRICHpsst R0 174.50*cm -12.50*cm -40.6972*cm
+   ciDRICHpsst R0 174.50*cm -7.50*cm -40.4268*cm
+   ciDRICHpsst R0 174.50*cm -2.50*cm -40.2746*cm
+   ciDRICHpsst R0 174.50*cm 2.50*cm -40.2753*cm
+   ciDRICHpsst R0 174.50*cm 7.50*cm -40.4589*cm
+   ciDRICHpsst R0 174.50*cm 12.50*cm -40.7078*cm
+   ciDRICHpsst R0 174.50*cm 17.50*cm -41.2179*cm
+   ciDRICHpsst R0 174.50*cm 22.50*cm -41.9219*cm
+   ciDRICHpsst R0 174.50*cm 27.50*cm -42.7051*cm
+   ciDRICHpsst R0 174.50*cm 32.50*cm -43.7055*cm
+   ciDRICHpsst R0 179.50*cm -32.50*cm -44.7877*cm
+   ciDRICHpsst R0 179.50*cm -27.50*cm -43.7000*cm
+   ciDRICHpsst R0 179.50*cm -22.50*cm -42.9865*cm
+   ciDRICHpsst R0 179.50*cm -17.50*cm -42.1977*cm
+   ciDRICHpsst R0 179.50*cm -12.50*cm -41.7208*cm
+   ciDRICHpsst R0 179.50*cm -7.50*cm -41.5000*cm
+   ciDRICHpsst R0 179.50*cm -2.50*cm -41.3395*cm
+   ciDRICHpsst R0 179.50*cm 2.50*cm -41.2500*cm
+   ciDRICHpsst R0 179.50*cm 7.50*cm -41.4277*cm
+   ciDRICHpsst R0 179.50*cm 12.50*cm -41.8924*cm
+   ciDRICHpsst R0 179.50*cm 17.50*cm -42.2439*cm
+   ciDRICHpsst R0 179.50*cm 22.50*cm -42.9177*cm
+   ciDRICHpsst R0 179.50*cm 27.50*cm -43.7317*cm
+   ciDRICHpsst R0 179.50*cm 32.50*cm -44.6935*cm
+   ciDRICHpsst R0 184.50*cm -37.50*cm -47.1707*cm
+   ciDRICHpsst R0 184.50*cm -32.50*cm -45.9098*cm
+   ciDRICHpsst R0 184.50*cm -27.50*cm -44.9598*cm
+   ciDRICHpsst R0 184.50*cm -22.50*cm -44.1290*cm
+   ciDRICHpsst R0 184.50*cm -17.50*cm -43.4425*cm
+   ciDRICHpsst R0 184.50*cm -12.50*cm -42.9632*cm
+   ciDRICHpsst R0 184.50*cm -7.50*cm -42.7024*cm
+   ciDRICHpsst R0 184.50*cm -2.50*cm -42.5370*cm
+   ciDRICHpsst R0 184.50*cm 2.50*cm -42.5290*cm
+   ciDRICHpsst R0 184.50*cm 7.50*cm -42.7079*cm
+   ciDRICHpsst R0 184.50*cm 12.50*cm -42.9878*cm
+   ciDRICHpsst R0 184.50*cm 17.50*cm -43.4315*cm
+   ciDRICHpsst R0 184.50*cm 22.50*cm -44.0000*cm
+   ciDRICHpsst R0 184.50*cm 27.50*cm -44.9535*cm
+   ciDRICHpsst R0 184.50*cm 32.50*cm -45.9400*cm
+   ciDRICHpsst R0 184.50*cm 37.50*cm -47.0851*cm
+   ciDRICHpsst R0 189.50*cm -37.50*cm -48.4783*cm
+   ciDRICHpsst R0 189.50*cm -32.50*cm -47.3364*cm
+   ciDRICHpsst R0 189.50*cm -27.50*cm -46.3452*cm
+   ciDRICHpsst R0 189.50*cm -22.50*cm -45.5000*cm
+   ciDRICHpsst R0 189.50*cm -17.50*cm -44.9111*cm
+   ciDRICHpsst R0 189.50*cm -12.50*cm -44.2708*cm
+   ciDRICHpsst R0 189.50*cm -7.50*cm -44.0802*cm
+   ciDRICHpsst R0 189.50*cm -2.50*cm -43.9400*cm
+   ciDRICHpsst R0 189.50*cm 2.50*cm -43.8951*cm
+   ciDRICHpsst R0 189.50*cm 7.50*cm -44.0195*cm
+   ciDRICHpsst R0 189.50*cm 12.50*cm -44.2778*cm
+   ciDRICHpsst R0 189.50*cm 17.50*cm -44.9941*cm
+   ciDRICHpsst R0 189.50*cm 22.50*cm -45.4518*cm
+   ciDRICHpsst R0 189.50*cm 27.50*cm -46.3132*cm
+   ciDRICHpsst R0 189.50*cm 32.50*cm -47.3400*cm
+   ciDRICHpsst R0 189.50*cm 37.50*cm -48.4577*cm
+   ciDRICHpsst R0 194.50*cm -37.50*cm -50.0741*cm
+   ciDRICHpsst R0 194.50*cm -32.50*cm -48.8415*cm
+   ciDRICHpsst R0 194.50*cm -27.50*cm -47.9337*cm
+   ciDRICHpsst R0 194.50*cm -22.50*cm -47.1579*cm
+   ciDRICHpsst R0 194.50*cm -17.50*cm -46.5000*cm
+   ciDRICHpsst R0 194.50*cm -12.50*cm -45.9545*cm
+   ciDRICHpsst R0 194.50*cm -7.50*cm -45.5141*cm
+   ciDRICHpsst R0 194.50*cm -2.50*cm -45.3837*cm
+   ciDRICHpsst R0 194.50*cm 2.50*cm -45.3286*cm
+   ciDRICHpsst R0 194.50*cm 7.50*cm -45.5759*cm
+   ciDRICHpsst R0 194.50*cm 12.50*cm -45.9706*cm
+   ciDRICHpsst R0 194.50*cm 17.50*cm -46.3718*cm
+   ciDRICHpsst R0 194.50*cm 22.50*cm -47.0385*cm
+   ciDRICHpsst R0 194.50*cm 27.50*cm -47.8297*cm
+   ciDRICHpsst R0 194.50*cm 32.50*cm -48.9684*cm
+   ciDRICHpsst R0 194.50*cm 37.50*cm -49.9810*cm
+   ciDRICHpsst R0 199.50*cm -37.50*cm -51.8222*cm
+   ciDRICHpsst R0 199.50*cm -32.50*cm -50.6481*cm
+   ciDRICHpsst R0 199.50*cm -27.50*cm -49.7245*cm
+   ciDRICHpsst R0 199.50*cm -22.50*cm -48.6932*cm
+   ciDRICHpsst R0 199.50*cm -17.50*cm -47.9651*cm
+   ciDRICHpsst R0 199.50*cm -12.50*cm -47.6398*cm
+   ciDRICHpsst R0 199.50*cm -7.50*cm -47.3116*cm
+   ciDRICHpsst R0 199.50*cm -2.50*cm -47.0238*cm
+   ciDRICHpsst R0 199.50*cm 2.50*cm -47.0000*cm
+   ciDRICHpsst R0 199.50*cm 7.50*cm -47.2439*cm
+   ciDRICHpsst R0 199.50*cm 12.50*cm -47.6026*cm
+   ciDRICHpsst R0 199.50*cm 17.50*cm -48.1707*cm
+   ciDRICHpsst R0 199.50*cm 22.50*cm -48.7421*cm
+   ciDRICHpsst R0 199.50*cm 27.50*cm -49.6136*cm
+   ciDRICHpsst R0 199.50*cm 32.50*cm -50.5816*cm
+   ciDRICHpsst R0 199.50*cm 37.50*cm -51.7603*cm
 
 // define rotations of petals
 :ROTM R1 0. 0. 0.

@@ -162,7 +162,7 @@ void ci_DRICH_Design::ConstructDetectors() {  // @@ need to move optical propert
   
   //> Aerogel Optical Properties
 
-  auto aeroPO = new ciDRICHar("ciDRICHaerogelMat"); // (optical) model parameters
+  auto aeroPO = new ciDRICHaerogel("ciDRICHaerogelMat"); // (optical) model parameters
   aeroPO->setOpticalParams(3); // mode=3: use experimental data  
 
   //--------------------------------------
@@ -174,19 +174,20 @@ void ci_DRICH_Design::ConstructDetectors() {  // @@ need to move optical propert
 
   //--------------------------------
   //> Gas radiator optical properties
-
-
+  auto gasPO = new ciDRICHgas("ciDRICHgasMat");
+  gasPO->setOpticalParams();
+  
   //--------------------------------
   // Surfaces optical properties
 
-  //> photo sensors 
+  //> photo sensors single tile
 
-  auto photoSensor = new ciDRICHphotosensor("ciDRICHpst"); 
+  auto photoSensor = new ciDRICHphotosensor("ciDRICHpsst"); 
   photoSensor->setOpticalParams(0);
 
   //> mirror (simular to photosensor, but different params
 
-  auto mirror = new ciDRICHmir("ciDRICHmirror"); 
+  auto mirror = new ciDRICHmirror("ciDRICHmirror"); 
   mirror->setOpticalParams(0);
   
   fmt::print("# <<<<<<<<< ci_DRICH Det Construction end here\n");
