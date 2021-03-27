@@ -18,9 +18,9 @@ and porting to escalate/g4e and fun4all
 
 * other to come
 
-# Approach
+## Approach
 
-## Geometrical model
+### Geometrical model
 
 The dRICH is currently made of:
 1. Vessel: is a G4Cons, covering 2pi azimuth and about 5 to 25 deg polar; 
@@ -32,26 +32,26 @@ The dRICH is currently made of:
 1. Photosensor: it is made of a matrix of small tiles sensors; it is out of the dRICH charged particle acceptance; 
    it sits very approximately on the line which is symmetric to the (aerogel center - mirror middle point) line respect to the mirror radius ending in the mirror middle point, at a distance of 1/2 radius from the mirror middle point.
 
-This geometrical model is described in the drich-model.txt according to the GEANT4-text file format (https://geant4.web.cern.ch/sites/geant4.web.cern.ch/files/geant4/collaboration/working_groups/geometry/docs/textgeom/textgeom.pdf)
+This geometrical model is described in the drich-model.txt according to the GEANT4-text file format [g4textgeom](https://geant4.web.cern.ch/sites/geant4.web.cern.ch/files/geant4/collaboration/working_groups/geometry/docs/textgeom/textgeom.pdf)
 
 All parameters directly related to the geometrical model (and simple material) are defined in the drich-model.txt; e.g. detector position and size, material composition and densities ...
 
-## Optical description
+### Optical description
 
 The optical description of the dRICH components (aerogel, acrylic filter, gas, mirror and sensors) are embedded into C++ classes derived from a generic "ciDRICHOptics" class. Each component has its optical specifications in terms of e.g. dispersion relation, absorption length ...
 
 All parameters related to the optical description, and not connected to the geometrical model are defined as geant4 macro parameters (e.g. the filter cut-off frequency)
 
-# escalate/g4e porting
+## escalate/g4e porting
 
-## Geant4 Parameters
+### Geant4 Parameters
 
 dRICH specific Geant4 macro commands are defined in ci_DRICH_Config
 They include definition of model parameters that cannot be specified in the geometry file.
 
 All geometrical related parameters are defined in the Geant4 geometry-text file
 
-## Geant4 Naming Convention:
+### Geant4 Naming Convention:
 
 A component name is prefixed by "ciDRICH" and then the specific name of the component; e.g.: ciDRICHaerogel.
 This name is used, if there are no ambiguities for the Geant4 name of the related component classes:
