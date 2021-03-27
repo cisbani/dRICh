@@ -25,11 +25,13 @@
 // default units: mm, deg, g/cm3, g/mole ??? could be confusing!!
 // ----------
 
-// vessel is the internal dRICH volume
-:P vesselInRadius 10.*cm
-:P vesselLengthZ 160.*cm
-:P vesselOutRadiusEntrance 210.*cm
-:P vesselOutRadiusExit 210.*cm
+// vessel is the whole dRICH volume (including the walls)
+:P vesselInRadius 9.5*cm
+:P vesselLengthZ 161.0*cm
+:P vesselOutRadiusEntrance 210.5*cm
+:P vesselOutRadiusExit 210.5*cm
+:P vesselWallThickness 0.5*cm
+:P vesselWindowThickness 0.1*cm
 
 :P petalPhiStart -29.9
 :P petalPhiDelta  59.8
@@ -48,14 +50,14 @@
 :P mirrorThickness  0.2*cm
 :P mirrorCenterX   145.*cm
 :P mirrorCenterZ -210.0*cm
-:P mirrorThetaSpan  40.
+:P mirrorThetaSpan  40.        // NOTE: this depends on the size of the vessel!!
 
 :P sensorTileLengthX   5.*cm
 :P sensorTileLengthY   5.*cm
 :P sensorTileThickness 1.*cm
 
 // ------------------
-// Derived parameters
+// Main Derived parameters
 // ------------------
 
 :P aerogelZ0 -$vesselLengthZ/2.+$aerogelThickness/2.
@@ -65,10 +67,16 @@
 
 :P sio2FractionInAerogel (1.-$airFractionInAerogel)
 
+// internal vessel
+:P vInR $vesselInRadius+$vesselWallThickness
+:P vOutR0 $vesselOutRadiusEntrance-$vesselWallThickness
+:P vOutR1 $vesselOutRadiusExit-$vesselWallThickness
+:P vLenZ $vesselLengthZ-2.*$vesselWindowThickness
+
 :P mirrorInRadius $mirrorRadius-$mirrorThickness
 :P mirrorThetaRot asin($mirrorCenterX/$mirrorRadius)/deg
-:P mirrorTheta0 ($mirrorThetaRot-asin(($mirrorCenterX-$vesselInRadius)/$mirrorRadius)/deg)
-:P mirrorTheta1 (acos(($vesselLengthZ/2.-$mirrorCenterZ)/$mirrorRadius))/deg
+:P mirrorTheta0 ($mirrorThetaRot-asin(($mirrorCenterX-$vInR)/$mirrorRadius)/deg)
+:P mirrorTheta1 (acos(($vesselLengthZ/2.-$vesselWallThickness-$mirrorCenterZ)/$mirrorRadius))/deg
 //:P mirrorThetaSpan $mirrorThetaRot-$mirrorTheta0-$mirrorTheta1
 
 // uncomment the following line to dump values of parameters
@@ -98,8 +106,12 @@
       
 // Solids and Logical Volume combined
 
-:VOLU ciDRICHvessel CONS $vesselInRadius $vesselOutRadiusEntrance $vesselInRadius $vesselOutRadiusExit $vesselLengthZ/2. 0. 360. ciDRICHgasMat
-:COLOR ciDRICHvessel 0.9 0.9 0.9 0.9
+// this is the mother volume of the dRICH, include thicknesses
+:VOLU ciDRICHvessel CONS $vesselInRadius $vesselOutRadiusEntrance $vesselInRadius $vesselOutRadiusExit $vesselLengthZ/2. 0. 360. G4_Al
+:COLOR ciDRICHvessel 0.95 0.95 0.95 0.95
+
+:VOLU ciDRICHivessel CONS $vInR $vOutR0 $vInR $vOutR1 $vLenZ/2. 0. 360. ciDRICHgasMat
+:COLOR ciDRICHivessel 0.9 0.9 0.9 0.9
 
 :VOLU ciDRICHaerogel CONS $aerogelInRadius $aerogelOutRadius $aerogelInRadius $aerogelOutRadius $aerogelThickness/2. $petalPhiStart $petalPhiDelta ciDRICHaerogelMat
 :COLOR ciDRICHaerogel 0.6 0.6 0.6 0.4
@@ -303,12 +315,12 @@
 :ROTM R6 0. 0. 300.
 
 // Place volumes assembled petals
-:PLACE_ASSEMBLY ciDRICHpetal ciDRICHvessel R1 0. 0. 0.
-:PLACE_ASSEMBLY ciDRICHpetal ciDRICHvessel R2 0. 0. 0.
-:PLACE_ASSEMBLY ciDRICHpetal ciDRICHvessel R3 0. 0. 0.
-:PLACE_ASSEMBLY ciDRICHpetal ciDRICHvessel R4 0. 0. 0.
-:PLACE_ASSEMBLY ciDRICHpetal ciDRICHvessel R5 0. 0. 0.
-:PLACE_ASSEMBLY ciDRICHpetal ciDRICHvessel R6 0. 0. 0.
+:PLACE_ASSEMBLY ciDRICHpetal ciDRICHivessel R1 0. 0. 0.
+:PLACE_ASSEMBLY ciDRICHpetal ciDRICHivessel R2 0. 0. 0.
+:PLACE_ASSEMBLY ciDRICHpetal ciDRICHivessel R3 0. 0. 0.
+:PLACE_ASSEMBLY ciDRICHpetal ciDRICHivessel R4 0. 0. 0.
+:PLACE_ASSEMBLY ciDRICHpetal ciDRICHivessel R5 0. 0. 0.
+:PLACE_ASSEMBLY ciDRICHpetal ciDRICHivessel R6 0. 0. 0.
 
-//:PLACE "ciDRICHvessel" 1 ci_DRICH_GVol_Logic R0 0. 0. 0.
+:PLACE "ciDRICHivessel" 1 ciDRICHvessel R0 0. 0. 0.
 
