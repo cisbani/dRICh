@@ -163,7 +163,7 @@ void ci_DRICH_Design::ConstructDetectors() {  // @@ need to move optical propert
   //> Aerogel Optical Properties
 
   auto aeroPO = new ciDRICHaerogel("ciDRICHaerogelMat"); // (optical) model parameters
-  aeroPO->setOpticalParams(3); // mode=3: use experimental data  
+  aeroPO->setOpticalParams(cfg.aerOptModel); // mode=3: use experimental data  
 
   //--------------------------------------
   //> Acrylic Filter Optical Properties

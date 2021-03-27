@@ -1,13 +1,15 @@
 /eic/detector subdetector
 /eic/subdetector/name ci_drich
 
-
-/eic/ci_DRICH/AerogelRefractiveIndex 1.0234
-/eic/ci_DRICH/GasRefractiveIndex 1.000812
-/eic/ci_DRICH/ReferenceWavelength 400 nm
-/eic/ci_DRICH/FilterThreshold 300 nm
-
+# Geometric model and material
 /eic/ci_DRICH/ModelFile drich-model.txt
+
+# Optical parameters
+# /eic/ci_DRICH/AerogelRefractiveIndex 1.0234
+# /eic/ci_DRICH/GasRefractiveIndex 1.000812
+# /eic/ci_DRICH/ReferenceWavelength 400 nm
+/eic/ci_DRICH/AerogelOpticalModel 3
+/eic/ci_DRICH/FilterThreshold 300 nm
 
 /run/initialize
 

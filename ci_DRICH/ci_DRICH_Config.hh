@@ -51,10 +51,12 @@ struct ci_DRICH_Config {
   */
   //  G4String optical_file = "drich-optical.txt";
   
-  // optical properties (put in optical file ???)
+  // optical properties
+  int aerOptModel = 3; // aerogel optical model used to estimate the refractive Index
+  double filter_thr = 300 * nm; // wavelength filter cutoff
+  
   double aerogel_n = 1.03; // aerogel refractive index, at reference wavelength
   double gas_n = 1.0008; // gas refractive index, at reference wavelength
-  double filter_thr = 300 * nm; // wavelength filter cutoff
   double wavelength_ref = 400 * nm; // reference wavelength (for aerogel, gas, mirror ...)
   
   // Create a global messenger that will be used
@@ -89,7 +91,6 @@ struct ci_DRICH_Config {
 
       
       auto cmd0 = Messenger->DeclareProperty("AerogelRefractiveIndex", aerogel_n, "Aerogel Radiator Refractive Index at reference wavelength");
-      
       cmd0.SetParameterName("aerogeln",true);
       cmd0.SetRange("aerogeln>1.0");
       cmd0.SetDefaultValue(1.03);
@@ -108,6 +109,10 @@ struct ci_DRICH_Config {
       cmd3.SetParameterName("wlfil",true);
       cmd3.SetRange("wlfil>0.");
       cmd3.SetDefaultValue(300.*nm);
+
+      auto cmd4 = Messenger->DeclareProperty("AerogelOpticalModel", aerOptModel, "Aerogel Optical Model for Refractive Index (0:Vorobiev, 1:Sellmeier CLAS12, 2: LHCb, 3: scale exp. points");
+      cmd4.SetParameterName("aerOptMod",true);
+      cmd4.SetDefaultValue(3);
       
       //      Messenger->DeclareProperty("GeometryFile", geometry_file, "Full path of Geometry configuration file (e.g. sensor array coordinates ...)");
       // Messenger->DeclareProperty("OpticalFile", optical_file, "Full path of Optical configuration file (e.g. sensor quantum efficienct curve, mirror transmittance, radiators dispersion relations ...)");
