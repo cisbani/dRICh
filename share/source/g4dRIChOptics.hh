@@ -15,17 +15,15 @@
 #include "G4tgbMaterialMgr.hh"
 #include "G4tgbVolumeMgr.hh"
 
-//#include "ci_DRICH_Config.hh"
-
 /*
- * Service Classes
+ * dRICh optics definition classes
  */
 
 //
 // Generic optical parameters class
 //
 
-class ciDRICHOptics {
+class g4dRIChOptics {
 
 public:
   
@@ -42,7 +40,7 @@ public:
   // matName: material name
   // logVolName: logical volume name
   // if name is "_NA_", properties are not applied to the corresponding component 
-  ciDRICHOptics(const G4String matName, const G4String logVolName) {
+  g4dRIChOptics(const G4String matName, const G4String logVolName) {
 
     fmt::print("#=======================================================================\n");
     fmt::print("# Set Optical Properties\n");
@@ -92,7 +90,7 @@ public:
     
   };
   
-  ~ciDRICHOptics() {
+  ~g4dRIChOptics() {
 
     if (scaledE !=NULL) delete[] scaledE;
     if (scaledN !=NULL) delete[] scaledN;
@@ -105,12 +103,13 @@ public:
 
   };
 
-  // dvalue and ivalue may represent different quantities depending on implementation
+  // dvalue, ivalue, svalue may represent different quantities depending on implementation
   virtual int setOpticalParams() {};
   virtual int setOpticalParams(double dvalue) {};
   virtual int setOpticalParams(int ivalue) {};
   virtual int setOpticalParams(int ivalue, double dvalue) {};
-
+  virtual int setOpticalParams(G4String svalue) {};
+  
 protected:
 
   G4String materialName, logicalVName;
@@ -174,11 +173,11 @@ protected:
 //
 // Aerogel
 //
-class ciDRICHaerogel : public ciDRICHOptics {
+class g4dRIChAerogel : public g4dRIChOptics {
 
 public:
 
-  ciDRICHaerogel(const G4String matName) : ciDRICHOptics(matName, "_NA_") {};
+  g4dRIChAerogel(const G4String matName) : g4dRIChOptics(matName, "_NA_") {};
   //
   // Compute the refractive index, absorption length, scattering length for different energies points
   // 
@@ -351,11 +350,11 @@ private:
 // Acrylic Filter
 //
 
-class ciDRICHfilter : public ciDRICHOptics {
+class g4dRIChFilter : public g4dRIChOptics {
   
 public:
 
-  ciDRICHfilter(const G4String matName) : ciDRICHOptics(matName, "_NA_") {};
+  g4dRIChFilter(const G4String matName) : g4dRIChOptics(matName, "_NA_") {};
 
   // wlthr: threshold wavelength for low pass filter
   // mode currently not used
@@ -426,7 +425,6 @@ public:
   };
 
 private:
-
   
 };
 
@@ -434,11 +432,11 @@ private:
 // gas
 //
 
-class ciDRICHgas : public ciDRICHOptics {
+class g4dRIChGas : public g4dRIChOptics {
 
 public:
 
-  ciDRICHgas(const G4String matName) : ciDRICHOptics(matName, "_NA_") {
+  g4dRIChGas(const G4String matName) : g4dRIChOptics(matName, "_NA_") {
 
     int nel = mat->GetNumberOfElements(); 
     fmt::print("# Gas material number of elements {}\n", nel);
@@ -536,13 +534,18 @@ private:
 // Mirror
 //
 
-class ciDRICHmirror : public ciDRICHOptics {
+class g4dRIChMirror : public g4dRIChOptics {
 
 public:
-  ciDRICHmirror(const G4String logName) : ciDRICHOptics("_NA_", logName) { };
+  g4dRIChMirror(const G4String logName) : g4dRIChOptics("_NA_", logName) { };
+
+  // pSurfName: prefix used to generate surface names inserted in optical table
   
-  int setOpticalParams(int mode) {
-      
+  int setOpticalParams(G4String pSurfName) {
+
+    G4String surfaceName = pSurfName + "mirrorSurf";
+    G4String skinSurfaceName = pSurfName + "mirrorSkinSurf";
+    
     const double mirrorE[] =
       { 2.04358*eV, 2.0664*eV, 2.09046*eV, 2.14023*eV, 2.16601*eV, 2.20587*eV, 2.23327*eV, 2.26137*eV, 
 	2.31972*eV, 2.35005*eV, 2.38116*eV, 2.41313*eV, 2.44598*eV, 2.47968*eV, 2.53081*eV, 2.58354*eV, 
@@ -574,14 +577,14 @@ public:
 
     G4MaterialPropertiesTable * pT = addSkinPropTable(nEntries);
 
-    G4OpticalSurface * pOps = new G4OpticalSurface("ciDRICHmirOptS", unified, polishedfrontpainted, dielectric_dielectric); // to be parametrized
+    G4OpticalSurface * pOps = new G4OpticalSurface(surfaceName, unified, polishedfrontpainted, dielectric_dielectric); // to be parametrized
     pOps->SetMaterialPropertiesTable(pT);
     
-    new G4LogicalSkinSurface("ciDRICHmirrorSurf", logVolume, pOps);
+    new G4LogicalSkinSurface(skinSurfaceName, logVolume, pOps);
 
     return nEntries;
     
-    /*
+    /* from original Alessio GEMC code:
       $mir{"name"}         = "spherical_mirror";
         $mir{"description"}  = "reflective mirrors for eic rich";
         $mir{"type"}         = "dielectric_dielectric";
@@ -602,16 +605,19 @@ public:
 // photo sensor
 //
   
-class ciDRICHphotosensor : public ciDRICHOptics {
+class g4dRIChPhotosensor : public g4dRIChOptics {
 
 public:
 
-  // logName = ciDRICHpst logical volume of the photosensor in the dRICh geometry file
-  ciDRICHphotosensor(const G4String logName) : ciDRICHOptics("_NA_", logName) { };
+  g4dRIChPhotosensor(const G4String logName) : g4dRIChOptics("_NA_", logName) { };
 
-  // mode not used - TBC (from example extende/LXe)
-  int setOpticalParams(int mode) {
+  // pSurfName: prefix used to generate surface names inserted in optical table 
 
+  int setOpticalParams(G4String pSurfName) {
+
+    G4String surfaceName = pSurfName + "phseSurf";
+    G4String skinSurfaceName = pSurfName + "phseSkinSurf";
+    
     double E[] = {1.*eV, 4.*eV, 7.*eV };
     double SE[] = {1.0, 1.0, 1.0 };
     double N[] = {1.92, 1.92, 1.92 };
@@ -631,10 +637,10 @@ public:
     
     G4MaterialPropertiesTable * pT = addSkinPropTable(3);
     
-    G4OpticalSurface * pOps = new G4OpticalSurface("ciDRICHpsoSurf", glisur, polished, dielectric_metal);
+    G4OpticalSurface * pOps = new G4OpticalSurface(surfaceName, glisur, polished, dielectric_metal);
     pOps->SetMaterialPropertiesTable(pT);
     
-    new G4LogicalSkinSurface("ciDRICHpsSurf", logVolume, pOps); 
+    new G4LogicalSkinSurface(skinSurfaceName, logVolume, pOps); 
 
     return 2;
     

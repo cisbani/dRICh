@@ -1,0 +1,346 @@
+// Define the dRICh Geometry and Materials
+//
+//   the current dRICh mother volume is a conical vessel filled by the gas radiator
+//   the vessel hosts 6 petals
+//   each petal has an aerogel radiator, an acrylic filter, a mirror and sensor surface
+//
+//   z axis is along beam pipe
+//   x axis is transverse to beam pipe
+//   reference dRICh petal has y=0
+//
+// Ref:
+//    https://geant4.web.cern.ch/sites/geant4.web.cern.ch/files/geant4/collaboration/working_groups/geometry/docs/textgeom/textgeom.pdf
+//    geant4 source/persistency/ascii
+//
+// original dRICh simulation source code: github.com/EIC-eRD11/dualRICH_inMEIC
+//
+// Authors: C. Cisbani, A. Del Dotto, C. Fanelli
+//
+// Version: 0.1
+//
+// Date: Mar/2021
+//
+
+// ----------
+// names of volumes, surface, materials - they mat differ from porting to porting
+// they are used in optical description classes and likely in the definition of sensity volume responses
+// :PS parameter string seems to be not documented yet! and probably no operations on strings are permitted
+:PS motherName   ciDRICHvessel      // dRICh container vessel
+:PS vesselName   ciDRICHinnerv      // inner vessel volume, filled by gas and containing the other components
+:PS aerName      ciDRICHaerogel
+:PS filterName	 ciDRICHfilter
+:PS mirrorName   ciDRICHmirror
+:PS sensorTName  ciDRICHpsst        // single photo sensor tile
+:PS petalName    ciDRICHpethal      // single assembly pethal volume
+//
+:PS vesselMatName G4_Al              // container vessel material
+:PS gasMatName    ciDRICHgasMat
+:PS aerMatName    ciDRICHaerogelMat
+:PS filterMatName ciDRICHfilterMat
+:PS mirrorMatName ciDRICHmirrorMat
+:PS sensorMatName G4_Si
+
+// ----------
+// Parameters
+// default units: mm, deg, g/cm3, g/mole
+// be carefull, management of units in the geometry text file is somehow confusing (to me-EC)
+// ----------
+
+// vessel is the whole dRICH mother volume (including the walls)
+:P vesselInRadius 9.5*cm
+:P vesselLengthZ 161.0*cm
+:P vesselOutRadiusEntrance 210.5*cm
+:P vesselOutRadiusExit 210.5*cm
+:P vesselWallThickness 0.5*cm
+:P vesselWindowThickness 0.1*cm
+
+:P petalPhiStart -28.
+:P petalPhiDelta  56.
+
+:P aerogelThickness 4.*cm
+:P aerogelInRadius $vesselInRadius
+:P aerogelOutRadius 120.*cm
+
+:P aerogelDensity 0.1
+
+:P gasDensity 0.005734
+
+:P acrylicFilterThickness 0.32*mm
+
+:P mirrorRadius    290.*cm
+:P mirrorThickness  0.2*cm
+:P mirrorCenterX   145.*cm
+:P mirrorCenterZ -210.0*cm
+:P mirrorThetaSpan  40.        // NOTE: this depends on the size of the vessel!!
+
+:P sensorTileLengthX   5.*cm
+:P sensorTileLengthY   5.*cm
+:P sensorTileThickness 1.*cm
+
+// ------------------
+// Main Derived parameters
+// ------------------
+
+:P aerogelZ0 -$vesselLengthZ/2.+$aerogelThickness/2.
+:P acrylicFilterZ0 $aerogelZ0+$aerogelThickness/2.+$acrylicFilterThickness/2.
+
+:P airFractionInAerogel (2.32-$aerogelDensity)/(2.32-0.00120479)
+
+:P sio2FractionInAerogel (1.-$airFractionInAerogel)
+
+// internal vessel
+:P vInR $vesselInRadius+$vesselWallThickness
+:P vOutR0 $vesselOutRadiusEntrance-$vesselWallThickness
+:P vOutR1 $vesselOutRadiusExit-$vesselWallThickness
+:P vLenZ $vesselLengthZ-2.*$vesselWindowThickness
+
+:P mirrorInRadius $mirrorRadius-$mirrorThickness
+:P mirrorThetaRot asin($mirrorCenterX/$mirrorRadius)/deg
+:P mirrorTheta0 ($mirrorThetaRot-asin(($mirrorCenterX-$vInR)/$mirrorRadius)/deg)
+:P mirrorTheta1 (acos(($vesselLengthZ/2.-$vesselWallThickness-$mirrorCenterZ)/$mirrorRadius))/deg
+//:P mirrorThetaSpan $mirrorThetaRot-$mirrorTheta0-$mirrorTheta1
+
+// uncomment the following line to dump values of parameters
+//:P dummy $nonesiste
+
+// ------------------------------------------------
+// Materials G4_SILICON_DIOXIDE, G4_AIR, G4_F, G4_C
+// ------------------------------------------------
+
+:MIXT_BY_VOLUME ciDRICHaerogelMat $aerogelDensity 2
+      G4_AIR $airFractionInAerogel
+      G4_SILICON_DIOXIDE $sio2FractionInAerogel
+
+// acrylic material to be improved
+:MIXT_BY_WEIGHT $filterMatName 1.19 2
+      G4_PLEXIGLASS 0.99
+      G4_POLYVINYL_ACETATE 0.01
+
+:MIXT_BY_NATOMS ciDRICHgasMat $gasDensity 2
+      C 2
+      F 6
+
+// acrylic material **To Be Improved**
+:MIXT_BY_WEIGHT ciDRICHmirrorMat 1.19 2
+      G4_PLEXIGLASS 0.99
+      G4_POLYVINYL_ACETATE 0.01
+      
+// Solids and Logical Volume combined
+
+// this is the mother volume of the dRICH, include thicknesses
+:VOLU $motherName CONS $vesselInRadius $vesselOutRadiusEntrance $vesselInRadius $vesselOutRadiusExit $vesselLengthZ/2. 0. 360. $vesselMatName
+:COLOR $motherName 0.95 0.95 0.95 0.95
+
+:VOLU $vesselName CONS $vInR $vOutR0 $vInR $vOutR1 $vLenZ/2. 0. 360. $gasMatName
+:COLOR $vesselName 0.9 0.9 0.9 0.9
+
+:VOLU $aerName CONS $aerogelInRadius $aerogelOutRadius $aerogelInRadius $aerogelOutRadius $aerogelThickness/2. $petalPhiStart $petalPhiDelta $aerMatName
+:COLOR $aerName 0.6 0.6 0.6 0.4
+
+:VOLU $filterName CONS $aerogelInRadius $aerogelOutRadius $aerogelInRadius $aerogelOutRadius $acrylicFilterThickness/2. $petalPhiStart $petalPhiDelta $filterMatName
+:COLOR $filterName 0.5 0.7 0.5 0.5
+
+:VOLU $mirrorName SPHERE $mirrorInRadius $mirrorRadius $petalPhiStart $petalPhiDelta $mirrorTheta0 $mirrorThetaSpan $mirrorMatName
+:COLOR $mirrorName 0.5 0.5 0.8 0.2
+
+// photo-sensor single tile
+:VOLU $sensorTName BOX $sensorTileLengthX/2. $sensorTileLengthY/2. $sensorTileThickness/2. $sensorMatName
+:COLOR $sensorTName 0.6 0.2 0.2 0.5
+
+// rotation around y axis
+//:ROTM RMIR (90.-$mirrorThetaRot/deg) 0. 90. 90. -$mirrorThetaRot/deg 0.
+:ROTM RMIR 0. -$mirrorThetaRot 0.
+:ROTM R0 0. 0. 0.     
+
+// single petal
+:VOLU_ASSEMBLY $petalName (3+168)
+   $aerName R0 0. 0. $aerogelZ0
+   $filterName  R0 0. 0. $acrylicFilterZ0
+   $mirrorName  RMIR $mirrorCenterX 0. $mirrorCenterZ
+   $sensorTName R0 144.50*cm -27.50*cm -39.8816*cm
+   $sensorTName R0 144.50*cm -22.50*cm -39.1429*cm
+   $sensorTName R0 144.50*cm -17.50*cm -38.5000*cm
+   $sensorTName R0 144.50*cm -12.50*cm -37.9533*cm
+   $sensorTName R0 144.50*cm -7.50*cm -37.5000*cm
+   $sensorTName R0 144.50*cm -2.50*cm -37.5000*cm
+   $sensorTName R0 144.50*cm 2.50*cm -37.5000*cm
+   $sensorTName R0 144.50*cm 7.50*cm -37.5000*cm
+   $sensorTName R0 144.50*cm 12.50*cm -37.9878*cm
+   $sensorTName R0 144.50*cm 17.50*cm -38.5000*cm
+   $sensorTName R0 144.50*cm 22.50*cm -39.1774*cm
+   $sensorTName R0 144.50*cm 27.50*cm -39.8288*cm
+   $sensorTName R0 149.50*cm -27.50*cm -39.8974*cm
+   $sensorTName R0 149.50*cm -22.50*cm -39.2128*cm
+   $sensorTName R0 149.50*cm -17.50*cm -38.5000*cm
+   $sensorTName R0 149.50*cm -12.50*cm -38.3182*cm
+   $sensorTName R0 149.50*cm -7.50*cm -37.5000*cm
+   $sensorTName R0 149.50*cm -2.50*cm -37.5000*cm
+   $sensorTName R0 149.50*cm 2.50*cm -37.5000*cm
+   $sensorTName R0 149.50*cm 7.50*cm -37.5000*cm
+   $sensorTName R0 149.50*cm 12.50*cm -38.1933*cm
+   $sensorTName R0 149.50*cm 17.50*cm -38.5000*cm
+   $sensorTName R0 149.50*cm 22.50*cm -39.3169*cm
+   $sensorTName R0 149.50*cm 27.50*cm -39.8889*cm
+   $sensorTName R0 154.50*cm -27.50*cm -40.2363*cm
+   $sensorTName R0 154.50*cm -22.50*cm -39.4394*cm
+   $sensorTName R0 154.50*cm -17.50*cm -38.5854*cm
+   $sensorTName R0 154.50*cm -12.50*cm -38.4868*cm
+   $sensorTName R0 154.50*cm -7.50*cm -37.9079*cm
+   $sensorTName R0 154.50*cm -2.50*cm -37.5143*cm
+   $sensorTName R0 154.50*cm 2.50*cm -37.5116*cm
+   $sensorTName R0 154.50*cm 7.50*cm -37.8902*cm
+   $sensorTName R0 154.50*cm 12.50*cm -38.4833*cm
+   $sensorTName R0 154.50*cm 17.50*cm -38.6447*cm
+   $sensorTName R0 154.50*cm 22.50*cm -39.4744*cm
+   $sensorTName R0 154.50*cm 27.50*cm -40.1957*cm
+   $sensorTName R0 159.50*cm -27.50*cm -40.5440*cm
+   $sensorTName R0 159.50*cm -22.50*cm -39.6892*cm
+   $sensorTName R0 159.50*cm -17.50*cm -39.2500*cm
+   $sensorTName R0 159.50*cm -12.50*cm -38.5133*cm
+   $sensorTName R0 159.50*cm -7.50*cm -38.5000*cm
+   $sensorTName R0 159.50*cm -2.50*cm -38.4014*cm
+   $sensorTName R0 159.50*cm 2.50*cm -38.4605*cm
+   $sensorTName R0 159.50*cm 7.50*cm -38.5000*cm
+   $sensorTName R0 159.50*cm 12.50*cm -38.5256*cm
+   $sensorTName R0 159.50*cm 17.50*cm -39.2971*cm
+   $sensorTName R0 159.50*cm 22.50*cm -39.6176*cm
+   $sensorTName R0 159.50*cm 27.50*cm -40.5244*cm
+   $sensorTName R0 164.50*cm -32.50*cm -42.0248*cm
+   $sensorTName R0 164.50*cm -27.50*cm -41.0732*cm
+   $sensorTName R0 164.50*cm -22.50*cm -40.3526*cm
+   $sensorTName R0 164.50*cm -17.50*cm -39.6047*cm
+   $sensorTName R0 164.50*cm -12.50*cm -39.3261*cm
+   $sensorTName R0 164.50*cm -7.50*cm -38.8418*cm
+   $sensorTName R0 164.50*cm -2.50*cm -38.5652*cm
+   $sensorTName R0 164.50*cm 2.50*cm -38.5976*cm
+   $sensorTName R0 164.50*cm 7.50*cm -38.7278*cm
+   $sensorTName R0 164.50*cm 12.50*cm -39.3095*cm
+   $sensorTName R0 164.50*cm 17.50*cm -39.6728*cm
+   $sensorTName R0 164.50*cm 22.50*cm -40.3875*cm
+   $sensorTName R0 164.50*cm 27.50*cm -41.0682*cm
+   $sensorTName R0 164.50*cm 32.50*cm -42.0672*cm
+   $sensorTName R0 169.50*cm -32.50*cm -42.8929*cm
+   $sensorTName R0 169.50*cm -27.50*cm -41.8614*cm
+   $sensorTName R0 169.50*cm -22.50*cm -40.9891*cm
+   $sensorTName R0 169.50*cm -17.50*cm -40.3873*cm
+   $sensorTName R0 169.50*cm -12.50*cm -39.8034*cm
+   $sensorTName R0 169.50*cm -7.50*cm -39.5244*cm
+   $sensorTName R0 169.50*cm -2.50*cm -39.5000*cm
+   $sensorTName R0 169.50*cm 2.50*cm -39.5000*cm
+   $sensorTName R0 169.50*cm 7.50*cm -39.5147*cm
+   $sensorTName R0 169.50*cm 12.50*cm -39.8816*cm
+   $sensorTName R0 169.50*cm 17.50*cm -40.3831*cm
+   $sensorTName R0 169.50*cm 22.50*cm -40.9250*cm
+   $sensorTName R0 169.50*cm 27.50*cm -41.7706*cm
+   $sensorTName R0 169.50*cm 32.50*cm -42.7603*cm
+   $sensorTName R0 174.50*cm -32.50*cm -43.6143*cm
+   $sensorTName R0 174.50*cm -27.50*cm -42.7135*cm
+   $sensorTName R0 174.50*cm -22.50*cm -41.8521*cm
+   $sensorTName R0 174.50*cm -17.50*cm -41.2931*cm
+   $sensorTName R0 174.50*cm -12.50*cm -40.6972*cm
+   $sensorTName R0 174.50*cm -7.50*cm -40.4268*cm
+   $sensorTName R0 174.50*cm -2.50*cm -40.2746*cm
+   $sensorTName R0 174.50*cm 2.50*cm -40.2753*cm
+   $sensorTName R0 174.50*cm 7.50*cm -40.4589*cm
+   $sensorTName R0 174.50*cm 12.50*cm -40.7078*cm
+   $sensorTName R0 174.50*cm 17.50*cm -41.2179*cm
+   $sensorTName R0 174.50*cm 22.50*cm -41.9219*cm
+   $sensorTName R0 174.50*cm 27.50*cm -42.7051*cm
+   $sensorTName R0 174.50*cm 32.50*cm -43.7055*cm
+   $sensorTName R0 179.50*cm -32.50*cm -44.7877*cm
+   $sensorTName R0 179.50*cm -27.50*cm -43.7000*cm
+   $sensorTName R0 179.50*cm -22.50*cm -42.9865*cm
+   $sensorTName R0 179.50*cm -17.50*cm -42.1977*cm
+   $sensorTName R0 179.50*cm -12.50*cm -41.7208*cm
+   $sensorTName R0 179.50*cm -7.50*cm -41.5000*cm
+   $sensorTName R0 179.50*cm -2.50*cm -41.3395*cm
+   $sensorTName R0 179.50*cm 2.50*cm -41.2500*cm
+   $sensorTName R0 179.50*cm 7.50*cm -41.4277*cm
+   $sensorTName R0 179.50*cm 12.50*cm -41.8924*cm
+   $sensorTName R0 179.50*cm 17.50*cm -42.2439*cm
+   $sensorTName R0 179.50*cm 22.50*cm -42.9177*cm
+   $sensorTName R0 179.50*cm 27.50*cm -43.7317*cm
+   $sensorTName R0 179.50*cm 32.50*cm -44.6935*cm
+   $sensorTName R0 184.50*cm -37.50*cm -47.1707*cm
+   $sensorTName R0 184.50*cm -32.50*cm -45.9098*cm
+   $sensorTName R0 184.50*cm -27.50*cm -44.9598*cm
+   $sensorTName R0 184.50*cm -22.50*cm -44.1290*cm
+   $sensorTName R0 184.50*cm -17.50*cm -43.4425*cm
+   $sensorTName R0 184.50*cm -12.50*cm -42.9632*cm
+   $sensorTName R0 184.50*cm -7.50*cm -42.7024*cm
+   $sensorTName R0 184.50*cm -2.50*cm -42.5370*cm
+   $sensorTName R0 184.50*cm 2.50*cm -42.5290*cm
+   $sensorTName R0 184.50*cm 7.50*cm -42.7079*cm
+   $sensorTName R0 184.50*cm 12.50*cm -42.9878*cm
+   $sensorTName R0 184.50*cm 17.50*cm -43.4315*cm
+   $sensorTName R0 184.50*cm 22.50*cm -44.0000*cm
+   $sensorTName R0 184.50*cm 27.50*cm -44.9535*cm
+   $sensorTName R0 184.50*cm 32.50*cm -45.9400*cm
+   $sensorTName R0 184.50*cm 37.50*cm -47.0851*cm
+   $sensorTName R0 189.50*cm -37.50*cm -48.4783*cm
+   $sensorTName R0 189.50*cm -32.50*cm -47.3364*cm
+   $sensorTName R0 189.50*cm -27.50*cm -46.3452*cm
+   $sensorTName R0 189.50*cm -22.50*cm -45.5000*cm
+   $sensorTName R0 189.50*cm -17.50*cm -44.9111*cm
+   $sensorTName R0 189.50*cm -12.50*cm -44.2708*cm
+   $sensorTName R0 189.50*cm -7.50*cm -44.0802*cm
+   $sensorTName R0 189.50*cm -2.50*cm -43.9400*cm
+   $sensorTName R0 189.50*cm 2.50*cm -43.8951*cm
+   $sensorTName R0 189.50*cm 7.50*cm -44.0195*cm
+   $sensorTName R0 189.50*cm 12.50*cm -44.2778*cm
+   $sensorTName R0 189.50*cm 17.50*cm -44.9941*cm
+   $sensorTName R0 189.50*cm 22.50*cm -45.4518*cm
+   $sensorTName R0 189.50*cm 27.50*cm -46.3132*cm
+   $sensorTName R0 189.50*cm 32.50*cm -47.3400*cm
+   $sensorTName R0 189.50*cm 37.50*cm -48.4577*cm
+   $sensorTName R0 194.50*cm -37.50*cm -50.0741*cm
+   $sensorTName R0 194.50*cm -32.50*cm -48.8415*cm
+   $sensorTName R0 194.50*cm -27.50*cm -47.9337*cm
+   $sensorTName R0 194.50*cm -22.50*cm -47.1579*cm
+   $sensorTName R0 194.50*cm -17.50*cm -46.5000*cm
+   $sensorTName R0 194.50*cm -12.50*cm -45.9545*cm
+   $sensorTName R0 194.50*cm -7.50*cm -45.5141*cm
+   $sensorTName R0 194.50*cm -2.50*cm -45.3837*cm
+   $sensorTName R0 194.50*cm 2.50*cm -45.3286*cm
+   $sensorTName R0 194.50*cm 7.50*cm -45.5759*cm
+   $sensorTName R0 194.50*cm 12.50*cm -45.9706*cm
+   $sensorTName R0 194.50*cm 17.50*cm -46.3718*cm
+   $sensorTName R0 194.50*cm 22.50*cm -47.0385*cm
+   $sensorTName R0 194.50*cm 27.50*cm -47.8297*cm
+   $sensorTName R0 194.50*cm 32.50*cm -48.9684*cm
+   $sensorTName R0 194.50*cm 37.50*cm -49.9810*cm
+   $sensorTName R0 199.50*cm -37.50*cm -51.8222*cm
+   $sensorTName R0 199.50*cm -32.50*cm -50.6481*cm
+   $sensorTName R0 199.50*cm -27.50*cm -49.7245*cm
+   $sensorTName R0 199.50*cm -22.50*cm -48.6932*cm
+   $sensorTName R0 199.50*cm -17.50*cm -47.9651*cm
+   $sensorTName R0 199.50*cm -12.50*cm -47.6398*cm
+   $sensorTName R0 199.50*cm -7.50*cm -47.3116*cm
+   $sensorTName R0 199.50*cm -2.50*cm -47.0238*cm
+   $sensorTName R0 199.50*cm 2.50*cm -47.0000*cm
+   $sensorTName R0 199.50*cm 7.50*cm -47.2439*cm
+   $sensorTName R0 199.50*cm 12.50*cm -47.6026*cm
+   $sensorTName R0 199.50*cm 17.50*cm -48.1707*cm
+   $sensorTName R0 199.50*cm 22.50*cm -48.7421*cm
+   $sensorTName R0 199.50*cm 27.50*cm -49.6136*cm
+   $sensorTName R0 199.50*cm 32.50*cm -50.5816*cm
+   $sensorTName R0 199.50*cm 37.50*cm -51.7603*cm
+
+// define rotations of petals
+:ROTM R1 0. 0. 0.
+:ROTM R2 0. 0. 60.
+:ROTM R3 0. 0. 120.
+:ROTM R4 0. 0. 180.
+:ROTM R5 0. 0. 240.
+:ROTM R6 0. 0. 300.
+
+// Place volumes assembled petals
+:PLACE_ASSEMBLY $petalName $vesselName R1 0. 0. 0.
+:PLACE_ASSEMBLY $petalName $vesselName R2 0. 0. 0.
+:PLACE_ASSEMBLY $petalName $vesselName R3 0. 0. 0.
+:PLACE_ASSEMBLY $petalName $vesselName R4 0. 0. 0.
+:PLACE_ASSEMBLY $petalName $vesselName R5 0. 0. 0.
+:PLACE_ASSEMBLY $petalName $vesselName R6 0. 0. 0.
+
+:PLACE $vesselName 1 $motherName R0 0. 0. 0.
+

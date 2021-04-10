@@ -1,7 +1,7 @@
 
 #include "ci_DRICH_Design.hh"
 #include "ci_DRICH_Config.hh"
-#include "ci_DRICH_Model.hh"
+#include "g4dRIChOptics.hh"
 
 #include "G4tgbVolumeMgr.hh"
 #include "G4tgrMessenger.hh"
@@ -162,19 +162,19 @@ void ci_DRICH_Design::ConstructDetectors() {  // @@ need to move optical propert
   
   //> Aerogel Optical Properties
 
-  auto aeroPO = new ciDRICHaerogel("ciDRICHaerogelMat"); // (optical) model parameters
+  auto aeroPO = new g4dRIChAerogel("ciDRICHaerogelMat"); // (optical) model parameters
   aeroPO->setOpticalParams(cfg.aerOptModel); // mode=3: use experimental data  
 
   //--------------------------------------
   //> Acrylic Filter Optical Properties
 
   //  fmt::print("# Acrylic Wavelength Threshold : {} nm\n",cfg.filter_thr/(nm));
-  auto acryPO = new ciDRICHfilter("ciDRICHacrylicMat"); // (optical) model parameters
+  auto acryPO = new g4dRIChFilter("ciDRICHfilterMat"); // (optical) model parameters
   acryPO->setOpticalParams(cfg.filter_thr);
 
   //--------------------------------
   //> Gas radiator optical properties
-  auto gasPO = new ciDRICHgas("ciDRICHgasMat");
+  auto gasPO = new g4dRIChGas("ciDRICHgasMat");
   gasPO->setOpticalParams();
   
   //--------------------------------
@@ -182,13 +182,13 @@ void ci_DRICH_Design::ConstructDetectors() {  // @@ need to move optical propert
 
   //> photo sensors single tile
 
-  auto photoSensor = new ciDRICHphotosensor("ciDRICHpsst"); 
-  photoSensor->setOpticalParams(0);
+  auto photoSensor = new g4dRIChPhotosensor("ciDRICHpsst"); 
+  photoSensor->setOpticalParams("ciDRICH");
 
   //> mirror (simular to photosensor, but different params
 
-  auto mirror = new ciDRICHmirror("ciDRICHmirror"); 
-  mirror->setOpticalParams(0);
+  auto mirror = new g4dRIChMirror("ciDRICHmirror"); 
+  mirror->setOpticalParams("ciDRICH");
   
   fmt::print("# <<<<<<<<< ci_DRICH Det Construction end here\n");
   
