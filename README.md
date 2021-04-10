@@ -8,13 +8,13 @@ and porting to escalate/g4e and fun4all
 
 ## Repository structure
 
-* ci_DRICH: the escalate/g4e DRICH subdetector source code
+* `ci_DRICH`: the escalate/g4e DRICH subdetector source code
 
-* config: the g4e DRICH config/macro files
+* `config`: the g4e DRICH config/macro files
   * drich.mac : macro file
   * drich-model.txt : the geometry and main material model text file
 
-* utils: utility files, for current development; probably removed in the future, stable release
+* `utils`: utility files, for current development; probably removed in the future, stable release
 
 * other to come
 
@@ -23,7 +23,7 @@ and porting to escalate/g4e and fun4all
 ### Geometrical model
 
 The dRICH is currently made of:
-1. Vessel: is a G4Cons, covering 2pi azimuth and about 5 to 25 deg polar; 
+1. Vessel: is a `G4Cons`, covering 2pi azimuth and about 5 to 25 deg polar; 
    it contains the gas radiator and all other components; as a first guess its walls are made of aluminum material, 
    entrance and exit windows are thinner aluminum like foils; all other components are replicated into 6 virtual petals
 1. Aerogel: the first radiator just after the entrance window
