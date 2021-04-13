@@ -1,3 +1,11 @@
 *.sw*
-drich*/
-install/*
+drich.bak/
+drich/build/
+drich/source/*
+!drich/source/*.cc
+!drich/source/*.h
+!drich/source/autogen.sh
+!drich/source/*.ac
+!drich/source/*.am
+install/
+*.root
