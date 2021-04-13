@@ -42,8 +42,8 @@ public:
   // if name is "_NA_", properties are not applied to the corresponding component 
   g4dRIChOptics(const G4String matName, const G4String logVolName) {
 
-    fmt::print("#=======================================================================\n");
-    fmt::print("# Set Optical Properties\n");
+    printf("#=======================================================================\n");
+    printf("# Set Optical Properties\n");
     
     materialName = matName;
     logicalVName = logVolName;
@@ -59,20 +59,20 @@ public:
 
     if (matName != "_NA_") {
 
-      fmt::print("# Material {}\n",matName.data());
+      printf("# Material %s\n",matName.data());
 
       mat = G4tgbMaterialMgr::GetInstance()->FindBuiltG4Material(matName);
 
       if (mat == NULL) {
 	pTable = NULL;
-	fmt::print("# ERROR: Cannot retrieve {} material in ci_DRICH\n",matName);
+	printf("# ERROR: Cannot retrieve %s material in ci_DRICH\n",matName.data());
 	// handle error
       } else {
 	pTable = mat->GetMaterialPropertiesTable();
       }
       
       if (pTable == NULL) {
-	fmt::print("# No properties table available for {}, allocated a new one\n",matName);
+	printf("# No properties table available for %s, allocated a new one\n",matName.data());
 	pTable = new G4MaterialPropertiesTable();    
       } else {
 	pTable->DumpTable();
@@ -80,10 +80,10 @@ public:
     }
 
     if (logVolName != "_NA_") {
-      fmt::print("# Logical Volume {}\n",logVolName.data());
+      printf("# Logical Volume %s\n",logVolName.data());
       logVolume = G4tgbVolumeMgr::GetInstance()->FindG4LogVol(logVolName, 0);
       if (logVolume == NULL) {
-	fmt::print("# ERROR: Cannot retrieve {} logical volume in ci_DRICH\n",logVolName);
+	printf("# ERROR: Cannot retrieve %s logical volume in ci_DRICH\n",logVolName.data());
 	// handle error
       }
     }
@@ -104,11 +104,11 @@ public:
   };
 
   // dvalue, ivalue, svalue may represent different quantities depending on implementation
-  virtual int setOpticalParams() {};
-  virtual int setOpticalParams(double dvalue) {};
-  virtual int setOpticalParams(int ivalue) {};
-  virtual int setOpticalParams(int ivalue, double dvalue) {};
-  virtual int setOpticalParams(G4String svalue) {};
+  virtual int setOpticalParams() = 0;
+  virtual int setOpticalParams(double dvalue) = 0;
+  virtual int setOpticalParams(int ivalue) = 0;
+  virtual int setOpticalParams(int ivalue, double dvalue) = 0;
+  virtual int setOpticalParams(G4String svalue) = 0;
   
 protected:
 
@@ -136,7 +136,7 @@ protected:
     //    pTable->AddConstProperty("RESOLUTIONSCALE", 1.0); // @@@ TBC @@@
 
     mat->SetMaterialPropertiesTable(pTable);
-    fmt::print("# Optical Table for material {} with {} points:\n",materialName,nEntries);
+    printf("# Optical Table for material %s with %d points:\n",materialName.data(),nEntries);
     pTable->DumpTable();
     
   };
@@ -149,7 +149,7 @@ protected:
     if (scaledSR !=NULL) pTab->AddProperty("REFLECTIVITY", scaledE, scaledSR, nE);
     if (scaledN !=NULL) pTab->AddProperty("REALRINDEX", scaledE, scaledN, nE);
     if (scaledIN !=NULL) pTab->AddProperty("IMAGINARYRINDEX", scaledE, scaledIN, nE);
-    fmt::print("# Optical Table for volume {} with {} points:\n",logicalVName,nE);
+    printf("# Optical Table for volume %s with %d points:\n",logicalVName.data(),nE);
     pTab->DumpTable();
     
     return pTab;
@@ -222,7 +222,7 @@ public:
     const int nEntries = sizeof(aeroE)/sizeof(double);
 
     double density = mat->GetDensity();
-    fmt::print("# Aerogel Density : {} g/cm3\n",density/(g/cm3));
+    printf("# Aerogel Density : %f g/cm3\n",density/(g/cm3));
     
     double refn = density2refIndex(density); // use a n vs rho formula with provide n at 400 nm
     double refwl = 400*nm;
@@ -284,7 +284,7 @@ public:
 
     }
 
-    fmt::print("# Aerogel Refractive Index, Absorption and Scattering Lengths rescaled to density {:.5f} g/cm3, method: {}\n", density/g*cm3, mode);
+    printf("# Aerogel Refractive Index, Absorption and Scattering Lengths rescaled to density %.5f g/cm3, method: %d\n", density/g*cm3, mode);
 
     setMatPropTable(nEntries);
     
@@ -299,7 +299,7 @@ private:
     double x = wl / um;
     double nn = sqrt(1+0.6961663*x*x/(x*x-pow(0.0684043,2))+0.4079426*x*x/(x*x-pow(0.1162414,2))+0.8974794*x*x/(x*x-pow(9.896161,2)));
     if (nn<1.) {
-      fmt::print("# WARNING: estimated quartz refractive index is {} at wavelenght {} nm -> set to 1\n",nn,x);
+      printf("# WARNING: estimated quartz refractive index is %f at wavelength %f nm -> set to 1\n",nn,x);
       nn = 1.;
     }
     return nn;
@@ -310,7 +310,7 @@ private:
     double x = wl / um;
     double nn = 1.0+(0.05792105/(238.0185-1.0/x/x)+0.00167917/(57.362-1.0/x/x));
     if (nn<1.) {
-      fmt::print("# WARNING: estimated air refractive index is {} at wavelenght {} nm -> set to 1\n",nn,x);
+      printf("# WARNING: estimated air refractive index is %f at wavelength %f nm -> set to 1\n",nn,x);
       nn = 1.;
     }
     return nn;
@@ -405,7 +405,7 @@ public:
       break;
     }
     if (ithr==-1) {
-      fmt::print("# ERROR filter: wavelength threshold {} nm is out of range\n",wlthr/nm);
+      fprintf(stderr,"# ERROR filter: wavelength threshold %f nm is out of range\n",wlthr/nm);
       return 0;
     }
 	
@@ -416,7 +416,7 @@ public:
       scaledS[i] = 100000.*cm; // @@@@
     }
 
-    fmt::print("# Acrylic Filter Refractive Index, Absorption and Scattering Lengths rescaled to wavelength threshold {:.1f} nm\n", wlthr/nm);
+    printf("# Acrylic Filter Refractive Index, Absorption and Scattering Lengths rescaled to wavelength threshold %.1f nm\n", wlthr/nm);
 
     setMatPropTable(nEntries);
     
@@ -439,16 +439,16 @@ public:
   g4dRIChGas(const G4String matName) : g4dRIChOptics(matName, "_NA_") {
 
     int nel = mat->GetNumberOfElements(); 
-    fmt::print("# Gas material number of elements {}\n", nel);
+    printf("# Gas material number of elements %d\n", nel);
 
     chemFormula="";
     
     for (int i=0;i<nel;i++) {  // extract chemical formula from gas material
       auto ele = mat->GetElement(i);
-      fmt::print("# Element {} : Z {}  Name {} Atoms {}\n",i,ele->GetZ(),ele->GetSymbol(),mat->GetAtomsVector()[i]); 
+      printf("# Element %d : Z %f  Name %s Atoms %d\n",i,ele->GetZ(),ele->GetSymbol().data(),mat->GetAtomsVector()[i]); 
       chemFormula = chemFormula + ele->GetSymbol() + std::to_string(mat->GetAtomsVector()[i]);
     }
-    fmt::print("# Chemical Formula : {}\n",chemFormula);
+    printf("# Chemical Formula : %s\n",chemFormula.data());
     
   };
   
@@ -483,7 +483,7 @@ public:
       if (chemFormula == gasType[i]) igas=i;
     }
 
-    fmt::print("# Selected gas index {} for gas {}\n",igas, chemFormula);
+    printf("# Selected gas index %d for gas %s\n",igas, chemFormula.data());
     
     double density = mat->GetDensity();
     double refn = Ksr[igas] * density + 1.;
@@ -516,7 +516,7 @@ public:
       scaledS[i]=100000.*cm; // @@@@
     }
 
-    fmt::print("# Gas Refractive Index, Absorption and Scattering Lengths rescaled to density {} g/cm3, gas index: {}\n", density/g*cm3, igas);
+    printf("# Gas Refractive Index, Absorption and Scattering Lengths rescaled to density %f g/cm3, gas index: %d\n", density/g*cm3, igas);
 
     setMatPropTable(nEntries);
     

@@ -35,21 +35,21 @@
 
 #include <TSystem.h>
 
-#include <Geant4/G4ParticleDefinition.hh> 
-#include <Geant4/G4ReferenceCountedHandle.hh>
-#include <Geant4/G4Step.hh>
-#include <Geant4/G4StepPoint.hh> 
-#include <Geant4/G4StepStatus.hh>
-#include <Geant4/G4String.hh> 
-#include <Geant4/G4SystemOfUnits.hh>
-#include <Geant4/G4ThreeVector.hh>
-#include <Geant4/G4TouchableHandle.hh>
-#include <Geant4/G4Track.hh>
-#include <Geant4/G4TrackStatus.hh>
-#include <Geant4/G4Types.hh>
-#include <Geant4/G4VPhysicalVolume.hh>
-#include <Geant4/G4VTouchable.hh>
-#include <Geant4/G4VUserTrackInformation.hh>
+#include <G4ParticleDefinition.hh> 
+#include <G4ReferenceCountedHandle.hh>
+#include <G4Step.hh>
+#include <G4StepPoint.hh> 
+#include <G4StepStatus.hh>
+#include <G4String.hh> 
+#include <G4SystemOfUnits.hh>
+#include <G4ThreeVector.hh>
+#include <G4TouchableHandle.hh>
+#include <G4Track.hh>
+#include <G4TrackStatus.hh>
+#include <G4Types.hh>
+#include <G4VPhysicalVolume.hh>
+#include <G4VTouchable.hh>
+#include <G4VUserTrackInformation.hh>
 
 #include <cmath>
 #include <iostream>

@@ -3,8 +3,10 @@ AUTOMAKE_OPTIONS = foreign
 AM_CPPFLAGS = \
   -I$(includedir) \
   -I$(OFFLINE_MAIN)/include \
-  -I$(ROOTSYS)/include\
-  -I$(G4_MAIN)/include 
+  -I$(ROOTSYS)/include \
+  -I$(G4_MAIN)/include/ \
+  -I$(G4_MAIN)/include/Geant4 \
+  -I$(DRICH_F4A)/../share/source
 
 AM_LDFLAGS = \
   -L$(libdir) \
