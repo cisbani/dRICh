@@ -1,5 +1,3 @@
-// Tell emacs that this is a C++ source
-//  -*- C++ -*-.
 #ifndef DRICHDETECTOR_H
 #define DRICHDETECTOR_H
 
@@ -7,6 +5,7 @@
 
 #include <set>
 #include <string>  // for string
+#include <fstream>
 
 class G4LogicalVolume;
 class G4VPhysicalVolume;
@@ -35,6 +34,7 @@ class dRichDetector : public PHG4Detector
 
     void SuperDetector(const std::string &name) { m_SuperDetector = name; }
     const std::string SuperDetector() const { return m_SuperDetector; }
+
 
   private:
     PHParameters *m_Params;

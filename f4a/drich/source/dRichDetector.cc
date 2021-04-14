@@ -22,6 +22,7 @@
 
 #include "dRichDetector.h"
 #include <g4dRIChOptics.hh>
+#include <ci_DRICH_Config.hh>
 
 #include <phparameter/PHParameters.h>
 
@@ -34,6 +35,7 @@
 #include <G4PVPlacement.hh>
 #include <G4SystemOfUnits.hh>
 #include <G4VisAttributes.hh>
+#include <G4tgbVolumeMgr.hh>
 
 #include <cmath>
 #include <iostream>
@@ -41,33 +43,87 @@
 class G4VSolid;
 class PHCompositeNode;
 
-using namespace std;
+using std::string;
+using std::cout;
+using std::cerr;
+using std::endl;
 
-//____________________________________________________________________________..
-dRichDetector::dRichDetector(PHG4Subsystem *subsys,
-    PHCompositeNode *Node,
-    PHParameters *parameters,
-    const std::string &dnam)
-  : PHG4Detector(subsys, Node, dnam)
-    , m_Params(parameters)
-{
-}
+// ---------------------------------------------------
+dRichDetector::dRichDetector(
+  PHG4Subsystem *subsys,
+  PHCompositeNode *Node,
+  PHParameters *parameters,
+  const string &dnam
+) : PHG4Detector(subsys, Node, dnam), m_Params(parameters)
+{}
 
-//_______________________________________________________________
-int dRichDetector::IsInDetector(G4VPhysicalVolume *volume) const
-{
-  set<G4VPhysicalVolume *>::const_iterator iter = m_PhysicalVolumesSet.find(volume);
-  if (iter != m_PhysicalVolumesSet.end())
-  {
+// ---------------------------------------------------
+int dRichDetector::IsInDetector(
+  G4VPhysicalVolume *volume
+) const {
+  std::set<G4VPhysicalVolume *>::const_iterator iter =
+    m_PhysicalVolumesSet.find(volume);
+  if (iter != m_PhysicalVolumesSet.end()) {
     return 1;
   }
   return 0;
 }
 
-//_______________________________________________________________
-void dRichDetector::ConstructMe(G4LogicalVolume *logicWorld)
-{
-  //begin implement your own here://
+// ---------------------------------------------------
+void dRichDetector::ConstructMe(G4LogicalVolume *logicWorld) {
+
+  // get env vars
+  char * drichHome = std::getenv("DRICH_HOME");
+  if(drichHome==NULL) {
+    cerr << "[+] ERROR: DRICH_HOME env var not set" << endl;
+    return;
+  };
+
+  // load model text file and configuration
+  ci_DRICH_Config cfg;
+  cfg.model_file = G4String(drichHome) +
+                   "/share/config/drich-g4model.txt";
+  cout << "[+] MODEL TEXT FILE: " << cfg.model_file << endl;
+  // - check existence
+  std::ifstream mf(cfg.model_file.data());
+  if(!mf.is_open()) {
+    cerr << "[+] ERROR: cannot find MODEL TEXT FILE" << endl;
+    return;
+  };
+  mf.close();
+
+
+  // graphics
+  G4VisAttributes * vis = new G4VisAttributes(G4Color(0., 0., 0.9, 0.5));
+  vis->SetForceSolid(true);
+  vis->SetVisibility(true);
+  vis->SetLineWidth(1);
+  vis->SetForceSolid(true);
+  logicWorld->SetVisAttributes(G4VisAttributes::Invisible);
+  //logicWorld->SetVisAttributes(vis);
+
+
+  // build detector by text file
+  cout << "[+] build detector from model text file" << endl;
+  G4tgbVolumeMgr * volmgr = G4tgbVolumeMgr::GetInstance();
+  volmgr->AddTextFile(cfg.model_file);
+  G4VPhysicalVolume * rVessel = 
+    volmgr->ReadAndConstructDetector();
+  cout << "[+] detector summary" << endl;
+  volmgr->DumpSummary();
+  cout << "[+] detector G4Solid list" << endl;
+  volmgr->DumpG4SolidList();
+
+  // add to logical world
+  logicWorld->AddDaughter(rVessel);
+  
+  // add to volume list, for IsInDetector method
+  m_PhysicalVolumesSet.insert(rVessel);
+
+
+  /// BEGIN TEMPLATE CODE ///////////////////////
+
+  /*
   // Do not forget to multiply the parameters with their respective CLHEP/G4 unit !
   double xdim = m_Params->get_double_param("size_x") * cm;
   double ydim = m_Params->get_double_param("size_y") * cm;
@@ -93,17 +149,19 @@ void dRichDetector::ConstructMe(G4LogicalVolume *logicWorld)
   // picks them up
   m_PhysicalVolumesSet.insert(phy);
   //end implement your own here://
+  */
+
   return;
 }
 
-//_______________________________________________________________
-void dRichDetector::Print(const std::string &what) const
+// ---------------------------------------------------
+void dRichDetector::Print(const string &what) const
 {
-  std::cout << "dRich Detector:" << std::endl;
+  cout << "dRich Detector:" << endl;
   if (what == "ALL" || what == "VOLUME")
   {
-    std::cout << "Version 0.1" << std::endl;
-    std::cout << "Parameters:" << std::endl;
+    cout << "Version 0.1" << endl;
+    cout << "Parameters:" << endl;
     m_Params->Print();
   }
   return;

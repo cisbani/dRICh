@@ -1,7 +1,8 @@
 #ifndef ci_DRICH_Config_HH
 #define ci_DRICH_Config_HH
 
-#include <InitializationContext.hh>
+//#include <InitializationContext.hh>
+#include <G4GenericMessenger.hh>
 
 struct ci_DRICH_Config {
 

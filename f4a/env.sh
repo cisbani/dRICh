@@ -6,6 +6,7 @@ else
   export DRICH_F4A=$(dirname $(realpath ${BASH_SOURCE[0]}))
 fi
 echo "DRICH_F4A=$DRICH_F4A"
+export DRICH_HOME=$DRICH_F4A/..
 
 dirInstall=$DRICH_F4A/install
 if [ -d "$dirInstall" ]; then

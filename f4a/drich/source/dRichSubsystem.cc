@@ -103,6 +103,7 @@ void dRichSubsystem::SetDefaultParameters()
   // angles are in deg
   // units should be converted to G4 units when used
   //implement your own here//
+  /*
   set_default_double_param("place_x", 0.);
   set_default_double_param("place_y", 0.);
   set_default_double_param("place_z", 0.);
@@ -114,4 +115,5 @@ void dRichSubsystem::SetDefaultParameters()
   set_default_double_param("size_z", 20.);
 
   set_default_string_param("material", "G4_Cu");
+  */
 }
