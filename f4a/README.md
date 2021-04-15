@@ -1,11 +1,15 @@
 # dRICh Fun4All porting
 
-- `util/startFun4all.sh [(optional)/path/to/fun4all/repo]`
-- `util/buildDetector.sh` or `util/buildDetector.sh clean`
-- `source env.sh`
+- if you have the fun4all singularity image, start a new container
+  - you can do this with `util/startFun4all.sh /path/to/fun4all/Singularity`,
+    where the path points to [Fun4all Singularity](https://github.com/eic/Singularity.git);
+    this script will source `eic_setup.sh`
+- build the dRICh by running `util/buildDetector.sh` or `util/buildDetector.sh clean`
+  - libraries and headers will appear in `./install`, if successful
+- set environment variables with `source env.sh`
   - `echo $LD_LIBRARY_PATH` should include `./install/lib`
-- `util/gui.sh`
-- `QTGui()`
+- open a Qt GUI and shoot particle(s) with `util/shootPion.sh`
+- use the command `/Fun4all/run 1` to shoot one particle and visualize
 
 ## changelog for shared code, or ESCalate implementation
 This is a summary of changes needed in code outside this

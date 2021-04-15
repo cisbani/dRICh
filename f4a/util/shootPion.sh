@@ -5,6 +5,6 @@ if [ -z "$DRICH_F4A" ]; then
 fi
 
 pushd $DRICH_F4A/drich/macros
-root -l gui.C
+root -l shootPion.C'(1)'
 popd
 
