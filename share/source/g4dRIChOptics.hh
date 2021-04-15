@@ -104,11 +104,11 @@ public:
   };
 
   // dvalue, ivalue, svalue may represent different quantities depending on implementation
-  virtual int setOpticalParams() = 0;
-  virtual int setOpticalParams(double dvalue) = 0;
-  virtual int setOpticalParams(int ivalue) = 0;
-  virtual int setOpticalParams(int ivalue, double dvalue) = 0;
-  virtual int setOpticalParams(G4String svalue) = 0;
+  virtual int setOpticalParams() { return -1; };
+  virtual int setOpticalParams(double dvalue) { return -1; };
+  virtual int setOpticalParams(int ivalue) { return -1; };
+  virtual int setOpticalParams(int ivalue, double dvalue) { return -1; };
+  virtual int setOpticalParams(G4String svalue) { return -1; };
   
 protected:
 
@@ -234,7 +234,8 @@ public:
 
     double aa;
     double nn;
-    double ri, rho, a0, wl0, rnscale;
+    double ri, a0, wl0, rnscale;
+    double rho = 0.0;
     
     if (scaledE==NULL) {
       scaledE = new double[nEntries];

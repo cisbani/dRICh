@@ -1,25 +1,3 @@
-//____________________________________________________________________________..
-//
-// This is a working template for the G4 Construct() method which needs to be implemented
-// We wedge a method between the G4 Construct() to enable volume hierarchies on the macro
-// so here it is called ConstructMe() but there is no functional difference
-// Currently this installs a simple G4Box solid, creates a logical volume from it
-// and places it. Put your own detector in place (just make sure all active volumes
-// get inserted into the m_PhysicalVolumesSet)
-// 
-// Rather than using hardcoded values you should consider using the parameter class
-// Parameter names and defaults are set in dRichSubsystem::SetDefaultParameters()
-// Only parameters defined there can be used (also to override in the macro)
-// to avoids typos.
-// IMPORTANT: parameters have no inherent units, there is a convention (cm/deg)
-// but in any case you need to multiply them here with the correct CLHEP/G4 unit 
-// 
-// The place where you put your own detector is marked with
-// //begin implement your own here://
-// //end implement your own here://
-// Do not forget to include the G4 includes for your volumes
-//____________________________________________________________________________..
-
 #include "dRichDetector.h"
 #include <g4dRIChOptics.hh>
 #include <ci_DRICH_Config.hh>
@@ -114,42 +92,32 @@ void dRichDetector::ConstructMe(G4LogicalVolume *logicWorld) {
   cout << "[+] detector G4Solid list" << endl;
   volmgr->DumpG4SolidList();
 
+
+  // material optical properties (see shared header g4dRIChOptics.hh)
+  // - aerogel
+  auto aeroPO = new g4dRIChAerogel("ciDRICHaerogelMat");
+  aeroPO->setOpticalParams(cfg.aerOptModel); // mode=3: use experimental data  
+  // - acrylic filter
+  printf("[+] Acrylic Wavelength Threshold : %f nm\n",cfg.filter_thr/(nm));
+  auto acryPO = new g4dRIChFilter("ciDRICHfilterMat");
+  acryPO->setOpticalParams(cfg.filter_thr);
+  // - gas radiator
+  auto gasPO = new g4dRIChGas("ciDRICHgasMat");
+  gasPO->setOpticalParams();
+  // - photo sensors
+  auto photoSensor = new g4dRIChPhotosensor("ciDRICHpsst"); 
+  photoSensor->setOpticalParams("ciDRICH");
+  // - mirror (simular to photosensor, but different params)
+  auto mirror = new g4dRIChMirror("ciDRICHmirror"); 
+  mirror->setOpticalParams("ciDRICH");
+  
+
   // add to logical world
   logicWorld->AddDaughter(rVessel);
   
   // add to volume list, for IsInDetector method
   m_PhysicalVolumesSet.insert(rVessel);
 
-
-  /// BEGIN TEMPLATE CODE ///////////////////////
-
-  /*
-  // Do not forget to multiply the parameters with their respective CLHEP/G4 unit !
-  double xdim = m_Params->get_double_param("size_x") * cm;
-  double ydim = m_Params->get_double_param("size_y") * cm;
-  double zdim = m_Params->get_double_param("size_z") * cm;
-  G4VSolid *solidbox = new G4Box("dRichSolid", xdim / 2., ydim / 2., zdim / 2.);
-  G4LogicalVolume *logical = new G4LogicalVolume(solidbox, G4Material::GetMaterial(m_Params->get_string_param("material")), "dRichLogical");
-
-  G4VisAttributes *vis = new G4VisAttributes(G4Color(G4Colour::Grey()));  // grey is good to see the tracks in the display
-  vis->SetForceSolid(true);
-  logical->SetVisAttributes(vis);
-  G4RotationMatrix *rotm = new G4RotationMatrix();
-  rotm->rotateX(m_Params->get_double_param("rot_x") * deg);
-  rotm->rotateY(m_Params->get_double_param("rot_y") * deg);
-  rotm->rotateZ(m_Params->get_double_param("rot_z") * deg);
-
-  G4VPhysicalVolume *phy = new G4PVPlacement(
-      rotm,
-      G4ThreeVector(m_Params->get_double_param("place_x") * cm,
-        m_Params->get_double_param("place_y") * cm,
-        m_Params->get_double_param("place_z") * cm),
-      logical, "dRich", logicWorld, 0, false, OverlapCheck());
-  // add it to the list of placed volumes so the IsInDetector method
-  // picks them up
-  m_PhysicalVolumesSet.insert(phy);
-  //end implement your own here://
-  */
 
   return;
 }

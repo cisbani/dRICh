@@ -16,9 +16,14 @@ conflict with the `ESCalate` implementation development.
   - replace `fmt` dependence with `stdio` functions
     - `fmt` is not in `fun4all` singularity container;
       this is just a quick fix
-  - empty virtual methods with non-void return values have
-    been converted to pure virtuals
-    - change `virtual int func(){};` to `virtual int func()=0;`
+  - `setOpticalParams` are empty virtual methods with
+    non-void return
+    - fix: added return dummy value `-1`
+  - in `g4dRIChAerogel`, mode 0 (Vorobiev), `rho` has no
+    value assigned to it, but it is needed later in
+    `scaledE` and `scaledS`
+    - quick fix: initialize `rho` with dummy value `0`
+    - mode 3 (CLAS12) is currently being used
 - `ci_DRICH_Config.hh`
   - comment out `InitializationContext.hh` include directive
     (not sure what this is)
