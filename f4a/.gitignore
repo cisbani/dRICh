@@ -9,3 +9,4 @@ drich/source/*
 !drich/source/*.am
 install/
 *.root
+drich/macros/G4History.macro

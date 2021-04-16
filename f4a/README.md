@@ -9,7 +9,7 @@
 - set environment variables with `source env.sh`
   - `echo $LD_LIBRARY_PATH` should include `./install/lib`
 - open a Qt GUI and shoot particle(s) with `util/shootPion.sh`
-- use the command `/Fun4all/run 1` to shoot one particle and visualize
+- use the command `/Fun4All/run 1` to shoot one particle and visualize
 
 ## changelog for shared code, or ESCalate implementation
 This is a summary of changes needed in code outside this

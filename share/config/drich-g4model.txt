@@ -135,7 +135,7 @@
 
 // petal, filled with gas
 :VOLU $petalName CONS $vInR $vOutR0 $vInR $vOutR1 $vLenZ/2. -30. 60. $gasMatName
-:COLOR $petalName 0.9 0.9 0.9 0.9
+:COLOR $petalName 0.9 0.9 0.9 0.1
 
 // aerogel
 :VOLU $aerName CONS $aerogelInRadius $aerogelOutRadius $aerogelInRadius $aerogelOutRadius $aerogelThickness/2. $petalPhiStart $petalPhiDelta $aerMatName
