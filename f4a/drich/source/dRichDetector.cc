@@ -82,9 +82,10 @@ void dRichDetector::ConstructMe(G4LogicalVolume *logicWorld) {
 
 
   // build detector by text file
-  cout << "[+] build detector from model text file" << endl;
+  cout << "[+] read model text file" << endl;
   G4tgbVolumeMgr * volmgr = G4tgbVolumeMgr::GetInstance();
   volmgr->AddTextFile(cfg.model_file);
+  cout << "[+] construct detector from text file" << endl;
   G4VPhysicalVolume * rVessel = 
     volmgr->ReadAndConstructDetector();
   cout << "[+] detector summary" << endl;

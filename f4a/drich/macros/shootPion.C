@@ -54,7 +54,7 @@ void shootPion(int nEvents = -1) {
   PHG4ParticleGun *gun = new PHG4ParticleGun();
   gun->set_pid(211); // pi+
   gun->set_vtx(0, 0, -1*m);
-  gun->set_mom(0.1*GeV, 0.1*GeV, 1*GeV);
+  gun->set_mom(0.07*GeV, 0.07*GeV, 1*GeV);
   f4a->registerSubsystem(gun);
 
   // start geant4 server, and add detector modules 
@@ -83,14 +83,13 @@ void shootPion(int nEvents = -1) {
     f4a->run(nEvents);
     cout << "Print out Detector parameters" << endl;
     drichSubsys->Print();
-    f4a->End();
   };
 
   // open Qt GUI, to visualize detector,
   // with or without a single event
   if(nEvents<=1) {
-    g4->InitRun(f4a->topNode());
-    g4->ApplyDisplayAction();
+    if(nEvents<=0) g4->InitRun(f4a->topNode());
+    //g4->ApplyDisplayAction();
     //g4->ApplyCommand("/control/execute init_gui_vis.mac");
     //g4->ApplyCommand("/control/execute vis.mac");
     g4->StartGui(); // start Qt
@@ -98,6 +97,7 @@ void shootPion(int nEvents = -1) {
 
 
   // cleanup and exit
+  f4a->End();
   if(g4) delete g4;
   if(f4a) delete f4a;
   gSystem->Exit(0);
