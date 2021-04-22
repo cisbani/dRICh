@@ -32,16 +32,25 @@ R__LOAD_LIBRARY(libg4detectors.so)
 R__LOAD_LIBRARY(libdRich.so)
 R__LOAD_LIBRARY(libg4histos.so)
 
-void shootPion(int nEvents = -1) {
+void shootPion(int nEvents = -1, Bool_t enableGUI=false) {
 
   // start server
   Fun4AllServer * f4a = Fun4AllServer::instance();
   recoConsts * rc = recoConsts::instance();
   //rc->set_IntFlag("RANDOMSEED",12345); // fix seed to reproduce results
 
+  /* particle names:
+   * pi+,pi-,pi0,
+   * e-,e+,
+   * kaon+,kaon-,kaon0,kaon0L,kaon0S,
+   * proton,anti_proton,
+   * mu+,mu-,
+   * gamma,
+   */
+
   /*// particle generator: spray particles within specified bounds
   PHG4ParticleGenerator * gen = new PHG4ParticleGenerator();
-  gen->set_name("pion");
+  gen->set_name("pi+");
   gen->set_mom_range(1.0, 1.0);
   gen->set_z_range(0., 0.);
   gen->set_vtx(0, 0, -5*m);
@@ -52,7 +61,7 @@ void shootPion(int nEvents = -1) {
 
   // particle gun: shoot particle in specified direction
   PHG4ParticleGun *gun = new PHG4ParticleGun();
-  gun->set_pid(211); // pi+
+  gun->set_name("pi+");
   gun->set_vtx(0, 0, -1*m);
   gun->set_mom(0.07*GeV, 0.07*GeV, 1*GeV);
   f4a->registerSubsystem(gun);
@@ -87,7 +96,7 @@ void shootPion(int nEvents = -1) {
 
   // open Qt GUI, to visualize detector,
   // with or without a single event
-  if(nEvents<=1) {
+  if(nEvents<=1 && enableGUI) {
     if(nEvents<=0) g4->InitRun(f4a->topNode());
     //g4->ApplyDisplayAction();
     //g4->ApplyCommand("/control/execute init_gui_vis.mac");

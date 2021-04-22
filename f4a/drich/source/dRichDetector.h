@@ -4,6 +4,7 @@
 #include <g4main/PHG4Detector.h>
 
 #include <set>
+#include <map>
 #include <string>  // for string
 #include <fstream>
 
@@ -32,6 +33,9 @@ class dRichDetector : public PHG4Detector
     int IsInDetector(G4VPhysicalVolume *) const;
     //@}
 
+    // recursively add detectors to active volume list
+    void ActivateVolumeTree(G4VPhysicalVolume *volu, G4int petal=0);
+
     void SuperDetector(const std::string &name) { m_SuperDetector = name; }
     const std::string SuperDetector() const { return m_SuperDetector; }
 
@@ -41,6 +45,7 @@ class dRichDetector : public PHG4Detector
 
     // active volumes
     std::set<G4VPhysicalVolume *> m_PhysicalVolumesSet;
+    std::map<G4VPhysicalVolume*,G4int> m_PetalMap;
 
     std::string m_SuperDetector;
 };

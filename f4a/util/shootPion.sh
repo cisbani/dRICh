@@ -4,7 +4,12 @@ if [ -z "$DRICH_F4A" ]; then
   source $(dirname $(realpath $0))/../env.sh
 fi
 
-pushd $DRICH_F4A/drich/macros
-root -l shootPion.C'(0)'
+# call macro
+macroDir=$DRICH_F4A/drich/macros
+pushd $macroDir
+root -l shootPion.C'(1,1)'
 popd
 
+# move output file(s) to out/
+mkdir -p out
+mv -v $(ls -t $macroDir/*.root | head -n1) out/

@@ -51,7 +51,7 @@ int dRichDetector::IsInDetector(
 void dRichDetector::ConstructMe(G4LogicalVolume *logicWorld) {
 
   // get env vars
-  char * drichHome = std::getenv("DRICH_HOME");
+  char *drichHome = std::getenv("DRICH_HOME");
   if(drichHome==NULL) {
     cerr << "[+] ERROR: DRICH_HOME env var not set" << endl;
     return;
@@ -72,7 +72,7 @@ void dRichDetector::ConstructMe(G4LogicalVolume *logicWorld) {
 
 
   // graphics
-  G4VisAttributes * vis = new G4VisAttributes(G4Color(0., 0., 0.9, 0.5));
+  G4VisAttributes *vis = new G4VisAttributes(G4Color(0., 0., 0.9, 0.5));
   vis->SetForceSolid(true);
   vis->SetVisibility(true);
   vis->SetLineWidth(1);
@@ -83,10 +83,10 @@ void dRichDetector::ConstructMe(G4LogicalVolume *logicWorld) {
 
   // build detector by text file
   cout << "[+] read model text file" << endl;
-  G4tgbVolumeMgr * volmgr = G4tgbVolumeMgr::GetInstance();
+  G4tgbVolumeMgr *volmgr = G4tgbVolumeMgr::GetInstance();
   volmgr->AddTextFile(cfg.model_file);
   cout << "[+] construct detector from text file" << endl;
-  G4VPhysicalVolume * rVessel = 
+  G4VPhysicalVolume *vesselPhysVol = 
     volmgr->ReadAndConstructDetector();
   cout << "[+] detector summary" << endl;
   volmgr->DumpSummary();
@@ -114,14 +114,51 @@ void dRichDetector::ConstructMe(G4LogicalVolume *logicWorld) {
   
 
   // add to logical world
-  logicWorld->AddDaughter(rVessel);
+  logicWorld->AddDaughter(vesselPhysVol);
   
-  // add to volume list, for IsInDetector method
-  m_PhysicalVolumesSet.insert(rVessel);
-
+  // activate volumes, for hit readout
+  this->ActivateVolumeTree(vesselPhysVol);
 
   return;
 }
+
+
+// ---------------------------------------------------
+// recursively add detectors to active volume list, descending the tree
+// from `volu`
+// - use the "activation filter" to decide for which volumes to save hits
+// - the petal number is added to `m_PetalMap`, which together
+//   with the copy number, provides a unique ID for each photo sensor
+void dRichDetector::ActivateVolumeTree(G4VPhysicalVolume *volu, G4int petal) {
+
+  // get objects
+  G4String voluName = volu->GetName();
+  G4int voluCopyNo = volu->GetCopyNo();
+  G4LogicalVolume *logi = volu->GetLogicalVolume();
+
+  // obtain petal number
+  if(voluName.contains("petal")) petal = voluCopyNo;
+
+  // activation filter: use this to decide which volumes to save
+  // hits for, i.e., which volumes are "active"
+  G4bool activate = voluName.contains("psst") || voluName.contains("vessel");
+  //activate = true; // override
+  if(activate) {
+    /*cout << "[+] activate " << voluName 
+         << " petal " << petal
+         << " copy " << voluCopyNo
+         << endl;*/
+    m_PhysicalVolumesSet.insert(volu);
+    m_PetalMap.insert(std::pair<G4VPhysicalVolume*,G4int>(volu,petal));
+  };
+
+  // loop over daughters
+  G4int nd = logi->GetNoDaughters();
+  for(int d=0; d<nd; d++) {
+    this->ActivateVolumeTree(logi->GetDaughter(d),petal);
+  };
+};
+
 
 // ---------------------------------------------------
 void dRichDetector::Print(const string &what) const
