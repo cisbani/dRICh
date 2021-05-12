@@ -122,7 +122,7 @@ dRichSteppingAction::~dRichSteppingAction()
 // This is the implementation of the G4 UserSteppingAction
 bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
 {
-  cout << "[+++++] call dRichSteppingAction::UserSteppingAction" << endl;
+  //cout << "[+++++] call dRichSteppingAction::UserSteppingAction" << endl;
   G4TouchableHandle preTouch = aStep->GetPreStepPoint()->GetTouchableHandle();
   G4TouchableHandle postTouch = aStep->GetPostStepPoint()->GetTouchableHandle();
   // get volume of the current step
@@ -132,8 +132,9 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   //  > 0 for hits in active volume
   //  < 0 for hits in passive material
   int whichactive = m_Detector->IsInDetector(volume);
-  cout << "[_] in " << volume->GetName() << ", whichactive=" << whichactive << endl;
   if(!whichactive) return false;
+
+  cout << "[_____] in " << volume->GetName() << ", whichactive=" << whichactive << endl;
 
   // collect energy and track length step by step
   G4double edep = aStep->GetTotalEnergyDeposit() / GeV;
@@ -142,21 +143,7 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   cout << "[_]  track " << aTrack->GetTrackID()
        << " is " << aTrack->GetParticleDefinition()->GetParticleName()
        << endl;
-  // we use here only one detector in this simple example
-  // if you deal with multiple detectors in this stepping action
-  // the detector id can be used to distinguish between them
-  // hits can easily be analyzed later according to their detector id
-  int detector_id = 0;  // we use here only one detector in this simple example
-  bool geantino = false;
-  // the check for the pdg code speeds things up, I do not want to make
-  // an expensive string compare for every track when we know
-  // geantino or chargedgeantino has pid=0
-  if (aTrack->GetParticleDefinition()->GetPDGEncoding() == 0 &&
-      aTrack->GetParticleDefinition()->GetParticleName().find("geantino") !=
-      std::string::npos)  // this also accounts for "chargedgeantino"
-  {
-    geantino = true;
-  }
+  printf("  track info @ 0x%p\n",(void*)aTrack->GetUserInformation());
   G4StepPoint *prePoint = aStep->GetPreStepPoint();
   G4StepPoint *postPoint = aStep->GetPostStepPoint();
 
@@ -186,27 +173,27 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
       {
         // this is an impossible G4 Step print out diagnostic to help debug, not sure if
         // this is still with us
-        std::cout << GetName() << ": New Hit for  " << std::endl;
-        std::cout << "prestep status: "
+        cout << GetName() << ": New Hit for  " << endl;
+        cout << "prestep status: "
           << PHG4StepStatusDecode::GetStepStatus(prePoint->GetStepStatus())
           << ", poststep status: "
           << PHG4StepStatusDecode::GetStepStatus(postPoint->GetStepStatus())
           << ", last pre step status: "
           << PHG4StepStatusDecode::GetStepStatus(m_SavePreStepStatus)
           << ", last post step status: "
-          << PHG4StepStatusDecode::GetStepStatus(m_SavePostStepStatus) << std::endl;
-        std::cout << "last track: " << m_SaveTrackId
-          << ", current trackid: " << aTrack->GetTrackID() << std::endl;
-        std::cout << "phys pre vol: " << volume->GetName()
-          << " post vol : " << postTouch->GetVolume()->GetName() << std::endl;
-        std::cout << " previous phys pre vol: " << m_SaveVolPre->GetName()
-          << " previous phys post vol: " << m_SaveVolPost->GetName() << std::endl;
+          << PHG4StepStatusDecode::GetStepStatus(m_SavePostStepStatus) << endl;
+        cout << "last track: " << m_SaveTrackId
+          << ", current trackid: " << aTrack->GetTrackID() << endl;
+        cout << "phys pre vol: " << volume->GetName()
+          << " post vol : " << postTouch->GetVolume()->GetName() << endl;
+        cout << " previous phys pre vol: " << m_SaveVolPre->GetName()
+          << " previous phys post vol: " << m_SaveVolPost->GetName() << endl;
       }
     // -- normal cases
     case fGeomBoundary:
     case fUndefined:
       if(!m_Hit) {
-        cout << "[+] make hit" << endl;
+        cout << "[+] make new hit" << endl;
         m_Hit = new PHG4Hitv1();
       }
 
@@ -239,24 +226,25 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
          */
 
       /*// diagnostic printout
-      std::cout << GetName() << ": New Hit for  " << std::endl;
-      std::cout << "prestep status: "
+      cout << GetName() << ": New Hit for  " << endl;
+      cout << "prestep status: "
         << PHG4StepStatusDecode::GetStepStatus(prePoint->GetStepStatus())
         << ", poststep status: "
         << PHG4StepStatusDecode::GetStepStatus(postPoint->GetStepStatus())
         << ", last pre step status: "
         << PHG4StepStatusDecode::GetStepStatus(m_SavePreStepStatus)
         << ", last post step status: "
-        << PHG4StepStatusDecode::GetStepStatus(m_SavePostStepStatus) << std::endl;
-      std::cout << "last track: " << m_SaveTrackId
-        << ", current trackid: " << aTrack->GetTrackID() << std::endl;
-      std::cout << "phys pre vol: " << volume->GetName()
-        << " post vol : " << postTouch->GetVolume()->GetName() << std::endl;
-      std::cout << " previous phys pre vol: " << m_SaveVolPre->GetName()
-        << " previous phys post vol: " << m_SaveVolPost->GetName() << std::endl;
+        << PHG4StepStatusDecode::GetStepStatus(m_SavePostStepStatus) << endl;
+      cout << "last track: " << m_SaveTrackId
+        << ", current trackid: " << aTrack->GetTrackID() << endl;
+      cout << "phys pre vol: " << volume->GetName()
+        << " post vol : " << postTouch->GetVolume()->GetName() << endl;
+      cout << " previous phys pre vol: " << m_SaveVolPre->GetName()
+        << " previous phys post vol: " << m_SaveVolPost->GetName() << endl;
       */
         
-      m_Hit->set_layer(detector_id);
+      // set petal number
+      m_Hit->set_layer(m_Detector->GetPetal(volume));
       // here we set the entrance values in cm
       m_Hit->set_x(0, prePoint->GetPosition().x() / cm);
       m_Hit->set_y(0, prePoint->GetPosition().y() / cm);
@@ -267,22 +255,22 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
       m_Hit->set_trkid(aTrack->GetTrackID());
       m_SaveTrackId = aTrack->GetTrackID();
       // set the initial energy deposit
-      m_EdepSum = 0;
+      m_EdepSum = 0; // TODO: maybe we don't need this
       // implement your own here://
       // add the properties you are interested in via set_XXX methods
       // you can find existing set methods in $OFFLINE_MAIN/include/g4main/PHG4Hit.h
       // this is initialization of your value. This is not needed you can just set the final
       // value at the last step in this volume later one
-      if (whichactive > 0)
+      if(whichactive > 0)
       {
         m_EionSum = 0;  // assuming the ionization energy is only needed for active
-        // volumes (scintillators)
+                        // volumes (scintillators)
         m_Hit->set_eion(0);
         m_SaveHitContainer = m_HitContainer;
       }
       else
       {
-        std::cout << "implement stuff for whichactive < 0 (inactive volumes)" << std::endl;
+        cout << "implement stuff for whichactive < 0 (inactive volumes)" << endl;
         gSystem->Exit(1);
       }
       // this is for the tracking of the truth info
@@ -304,32 +292,32 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   // check if this hit was created, if not print out last post step status
   if (!m_Hit || !std::isfinite(m_Hit->get_x(0)))
   {
-    std::cout << GetName() << ": hit was not created" << std::endl;
-    std::cout << "prestep status: "
+    cout << GetName() << ": hit was not created" << endl;
+    cout << "prestep status: "
       << PHG4StepStatusDecode::GetStepStatus(prePoint->GetStepStatus())
       << ", poststep status: "
       << PHG4StepStatusDecode::GetStepStatus(postPoint->GetStepStatus())
       << ", last pre step status: "
       << PHG4StepStatusDecode::GetStepStatus(m_SavePreStepStatus)
       << ", last post step status: "
-      << PHG4StepStatusDecode::GetStepStatus(m_SavePostStepStatus) << std::endl;
-    std::cout << "last track: " << m_SaveTrackId
-      << ", current trackid: " << aTrack->GetTrackID() << std::endl;
-    std::cout << "phys pre vol: " << volume->GetName()
-      << " post vol : " << postTouch->GetVolume()->GetName() << std::endl;
-    std::cout << " previous phys pre vol: " << m_SaveVolPre->GetName()
-      << " previous phys post vol: " << m_SaveVolPost->GetName() << std::endl;
+      << PHG4StepStatusDecode::GetStepStatus(m_SavePostStepStatus) << endl;
+    cout << "last track: " << m_SaveTrackId
+      << ", current trackid: " << aTrack->GetTrackID() << endl;
+    cout << "phys pre vol: " << volume->GetName()
+      << " post vol : " << postTouch->GetVolume()->GetName() << endl;
+    cout << " previous phys pre vol: " << m_SaveVolPre->GetName()
+      << " previous phys post vol: " << m_SaveVolPost->GetName() << endl;
     // This is fatal - a hit from nowhere. This needs to be looked at and fixed
     gSystem->Exit(1);
   }
   // check if track id matches the initial one when the hit was created
   if (aTrack->GetTrackID() != m_SaveTrackId)
   {
-    std::cout << GetName() << ": hits do not belong to the same track" << std::endl;
-    std::cout << "saved track: " << m_SaveTrackId
+    cout << GetName() << ": hits do not belong to the same track" << endl;
+    cout << "saved track: " << m_SaveTrackId
       << ", current trackid: " << aTrack->GetTrackID()
       << ", prestep status: " << prePoint->GetStepStatus()
-      << ", previous post step status: " << m_SavePostStepStatus << std::endl;
+      << ", previous post step status: " << m_SavePostStepStatus << endl;
     // This is fatal - a hit from nowhere. This needs to be looked at and fixed
     gSystem->Exit(1);
   }
@@ -340,6 +328,7 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   m_SavePostStepStatus = postPoint->GetStepStatus();
   m_SaveVolPre = volume;
   m_SaveVolPost = postTouch->GetVolume();
+
   // here we just update the exit values, it will be overwritten
   // for every step until we leave the volume or the particle
   // ceases to exist
@@ -349,6 +338,8 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   {
     m_EionSum += eion;
   }
+
+
   // if any of these conditions is true this is the last step in
   // this volume and we need to save the hit
   // postPoint->GetStepStatus() == fGeomBoundary: track leaves this volume
@@ -362,56 +353,53 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
       postPoint->GetStepStatus() == fAtRestDoItProc ||
       aTrack->GetTrackStatus() == fStopAndKill)
   {
-    // save only hits with energy deposit (or geantino)
-    if (m_EdepSum > 0 || geantino)
-    {
-      // update values at exit coordinates and set keep flag
-      // of track to keep
+    // save only hits on the photo sensors
+    if(prePoint->GetPhysicalVolume()->GetName().contains("DRICHpetal") &&
+       postPoint->GetPhysicalVolume()->GetName().contains("DRICHpsst")) {
+
+      cout << "[+++] hit on PSST, keep this hit!" << endl
+           << "      (x,y,z) = (" << postPoint->GetPosition().x() / cm
+                           << "," << postPoint->GetPosition().y() / cm
+                           << "," << postPoint->GetPosition().z() / cm
+                           << ")" << endl;
+
+      // update values at exit coordinates and set keep flag of track to keep
       m_Hit->set_x(1, postPoint->GetPosition().x() / cm);
       m_Hit->set_y(1, postPoint->GetPosition().y() / cm);
       m_Hit->set_z(1, postPoint->GetPosition().z() / cm);
       m_Hit->set_t(1, postPoint->GetGlobalTime() / nanosecond);
-      if (G4VUserTrackInformation *p = aTrack->GetUserInformation())
-      {
-        if (PHG4TrackUserInfoV1 *pp = dynamic_cast<PHG4TrackUserInfoV1 *>(p))
-        {
+      printf("track info ptr @ 0x%p\n",(void*)aTrack->GetUserInformation());
+      if(G4VUserTrackInformation *p = aTrack->GetUserInformation()) {
+        cout << "[+] here" << endl;
+        if(PHG4TrackUserInfoV1 *pp = dynamic_cast<PHG4TrackUserInfoV1 *>(p)) {
+          cout << "[+] set keep" << endl;
           pp->SetKeep(1);  // we want to keep the track
         }
       }
-      if (geantino)
-      {
-        //implement your own here://
-        // if you want to do something special for geantinos (normally you do not)
-        m_Hit->set_edep(-1);  // only energy=0 g4hits get dropped, this way
-        // geantinos survive the g4hit compression
-        if (whichactive > 0)
-        {
-          m_Hit->set_eion(-1);
-        }
-      }
-      else
-      {
-        m_Hit->set_edep(m_EdepSum);
-      }
-      //implement your own here://
-      // what you set here will be saved in the output
-      if (whichactive > 0)
-      {
+
+      cout << "  m_EdepSum=" << m_EdepSum
+           << "  m_EionSum=" << m_EionSum
+           << endl;
+           
+
+      m_Hit->set_edep(m_EdepSum);
+      if(whichactive > 0) {
         m_Hit->set_eion(m_EionSum);
       }
-      m_SaveHitContainer->AddHit(detector_id, m_Hit);
-      // ownership has been transferred to container, set to null
-      // so we will create a new hit for the next track
+
+      // transfer ownership to container
+      m_SaveHitContainer->AddHit(m_Detector->GetPetal(volume), m_Hit);
+      // then set to null so we will create a new hit for the next track
       m_Hit = nullptr;
     }
-    else
-    {
-      // if this hit has no energy deposit, just reset it for reuse
-      // this means we have to delete it in the dtor. If this was
-      // the last hit we processed the memory is still allocated
+    else {
+      // otherwise reset track for reuse; this means we have to delete it in
+      // the dtor. If this was the last hit we processed the memory is still
+      // allocated
+      cout << "[+++] reset hit for reuse" << endl;
       m_Hit->Reset();
-    }
-  }
+    };
+  };
   // return true to indicate the hit was used
   return true;
 }
@@ -419,13 +407,13 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
 //____________________________________________________________________________..
 void dRichSteppingAction::SetInterfacePointers(PHCompositeNode *topNode)
 {
-  std::string hitnodename = "G4HIT_" + m_Detector->GetName();
+  string hitnodename = "G4HIT_" + m_Detector->GetName();
   // now look for the map and grab a pointer to it.
   m_HitContainer = findNode::getClass<PHG4HitContainer>(topNode, hitnodename);
   // if we do not find the node we need to make it.
   if (!m_HitContainer)
   {
-    std::cout << "dRichSteppingAction::SetTopNode - unable to find "
-      << hitnodename << std::endl;
+    cout << "dRichSteppingAction::SetTopNode - unable to find "
+      << hitnodename << endl;
   }
 }

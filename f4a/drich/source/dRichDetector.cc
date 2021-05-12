@@ -141,13 +141,16 @@ void dRichDetector::ActivateVolumeTree(G4VPhysicalVolume *volu, G4int petal) {
 
   // activation filter: use this to decide which volumes to save
   // hits for, i.e., which volumes are "active"
+  // TODO: need to decide what volume we want to be active
   G4bool activate = voluName.contains("psst") || voluName.contains("vessel");
-  //activate = true; // override
+  activate = true; // override
   if(activate) {
-    /*cout << "[+] activate " << voluName 
+    ///*
+    cout << "[+] activate " << voluName 
          << " petal " << petal
          << " copy " << voluCopyNo
-         << endl;*/
+         << endl;
+         //*/
     m_PhysicalVolumesSet.insert(volu);
     m_PetalMap.insert(std::pair<G4VPhysicalVolume*,G4int>(volu,petal));
   };
@@ -157,6 +160,19 @@ void dRichDetector::ActivateVolumeTree(G4VPhysicalVolume *volu, G4int petal) {
   for(int d=0; d<nd; d++) {
     this->ActivateVolumeTree(logi->GetDaughter(d),petal);
   };
+};
+
+
+// ---------------------------------------------------
+// get petal number
+int dRichDetector::GetPetal(G4VPhysicalVolume *volu) {
+  int petalNum;
+  try { petalNum = m_PetalMap.at(volu); }
+  catch(const std::out_of_range &ex) {
+    cerr << "ERROR: cannot find petal associated with volume" << endl;
+    return -1;
+  };
+  return petalNum;
 };
 
 

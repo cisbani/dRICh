@@ -72,7 +72,7 @@ void shootPion(int nEvents = -1, Bool_t enableGUI=false) {
   g4->set_field(0);
   g4->save_DST_geometry(false); // disable this, if not tracking
   // - dRICh module
-  dRichSubsystem *drichSubsys = new dRichSubsystem("dRICh");
+  dRichSubsystem *drichSubsys = new dRichSubsystem("dRich");
   drichSubsys->SetActive();
   g4->registerSubsystem(drichSubsys);
   // - register geant4 module
@@ -80,7 +80,11 @@ void shootPion(int nEvents = -1, Bool_t enableGUI=false) {
 
   // hits module
   G4HitNtuple *hits = new G4HitNtuple("Hits");
-  hits->AddNode("dRIChHits", 0);
+  hits->AddNode("dRich_0", 0); /* NOTE:
+      * node name must match the
+      * subsystem name, appended with "_detectorID"; the
+      * second argument of AddNode is the detector ID
+      */
   f4a->registerSubsystem(hits);
 
   // dummy input manager, to drive event loop

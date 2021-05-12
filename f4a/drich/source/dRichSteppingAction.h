@@ -33,7 +33,7 @@ class dRichSteppingAction : public PHG4SteppingAction
     const PHParameters * m_Params;
     //! pointer to hit container
     PHG4HitContainer * m_HitContainer;
-    PHG4Hit * m_Hit;
+    PHG4Hit * m_Hit; // (actually type PHG4Hitv1*)
     PHG4HitContainer * m_SaveHitContainer;
     G4VPhysicalVolume * m_SaveVolPre;
     G4VPhysicalVolume * m_SaveVolPost;

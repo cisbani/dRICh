@@ -36,6 +36,9 @@ class dRichDetector : public PHG4Detector
     // recursively add detectors to active volume list
     void ActivateVolumeTree(G4VPhysicalVolume *volu, G4int petal=0);
 
+    // get petal number, given volume
+    int GetPetal(G4VPhysicalVolume *volu);
+
     void SuperDetector(const std::string &name) { m_SuperDetector = name; }
     const std::string SuperDetector() const { return m_SuperDetector; }
 

@@ -7,7 +7,7 @@ fi
 # call macro
 macroDir=$DRICH_F4A/drich/macros
 pushd $macroDir
-root -l shootPion.C'(1,1)'
+root -l shootPion.C'(1,0)'
 popd
 
 # move output file(s) to out/
