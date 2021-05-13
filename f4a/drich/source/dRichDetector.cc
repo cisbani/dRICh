@@ -177,6 +177,15 @@ int dRichDetector::GetPetal(G4VPhysicalVolume *volu) {
 
 
 // ---------------------------------------------------
+// get PSST number
+int dRichDetector::GetPSST(G4VPhysicalVolume *volu) {
+  cout << "DEBUG" << volu->GetName() << endl;
+  return volu->GetName().contains("psst") ?
+    volu->GetCopyNo() : 0;
+};
+
+
+// ---------------------------------------------------
 void dRichDetector::Print(const string &what) const
 {
   cout << "dRich Detector:" << endl;

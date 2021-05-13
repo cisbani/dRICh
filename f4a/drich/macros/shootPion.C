@@ -6,6 +6,7 @@
 
 // - $DRICH_HOME/f4a/install/include
 #include <drich/dRichSubsystem.h>
+#include <drich/dRichTree.h>
 
 // - $OFFLINE_MAIN/include
 #include <g4detectors/PHG4DetectorSubsystem.h>
@@ -87,9 +88,21 @@ void shootPion(int nEvents = -1, Bool_t enableGUI=false) {
       */
   f4a->registerSubsystem(hits);
 
+  // tree module
+  dRichTree *outTree = new dRichTree("dRichTree","dRichTree.root");
+  outTree->Verbosity(11);
+  f4a->registerSubsystem(outTree);
+
+  // output manager
+  Fun4AllDstOutputManager *outMgr = 
+    new Fun4AllDstOutputManager("DSTOUT","dRichHits.root");
+  outMgr->Verbosity(10);
+  f4a->registerOutputManager(outMgr);
+
   // dummy input manager, to drive event loop
-  Fun4AllInputManager *dum = new Fun4AllDummyInputManager("Dummy");
-  f4a->registerInputManager(dum);
+  Fun4AllInputManager *inMgr =
+    new Fun4AllDummyInputManager("Dummy");
+  f4a->registerInputManager(inMgr);
   
   // eventloop
   if(nEvents>0) {

@@ -15,7 +15,8 @@ AM_LDFLAGS = \
   -L$(OFFLINE_MAIN)/lib64
 
 pkginclude_HEADERS = \
-  dRichSubsystem.h
+  dRichSubsystem.h\
+	dRichTree.h
 
 lib_LTLIBRARIES = \
   libdRich.la
@@ -23,7 +24,9 @@ lib_LTLIBRARIES = \
 libdRich_la_SOURCES = \
   dRichSubsystem.cc\
   dRichDetector.cc\
-  dRichSteppingAction.cc
+	dRichHit.cc\
+  dRichSteppingAction.cc\
+	dRichTree.cc
 
 libdRich_la_LIBADD = \
   -lphool \

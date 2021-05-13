@@ -8,7 +8,7 @@ class dRichDetector;
 class G4Step;
 class G4VPhysicalVolume;
 class PHCompositeNode;
-class PHG4Hit;
+class dRichHit;
 class PHG4HitContainer;
 class PHParameters;
 
@@ -33,7 +33,7 @@ class dRichSteppingAction : public PHG4SteppingAction
     const PHParameters * m_Params;
     //! pointer to hit container
     PHG4HitContainer * m_HitContainer;
-    PHG4Hit * m_Hit; // (actually type PHG4Hitv1*)
+    dRichHit * m_Hit;
     PHG4HitContainer * m_SaveHitContainer;
     G4VPhysicalVolume * m_SaveVolPre;
     G4VPhysicalVolume * m_SaveVolPost;

@@ -1,22 +1,3 @@
-//____________________________________________________________________________..
-//
-// This is a working template for the Stepping Action which needs to be implemented
-// for active detectors. Most of the code is error handling and access to the G4 objects
-// and our data structures. It does not need any adjustment. The only thing you need to
-// do is to add the properties of the G4Hits you want to save for later analysis
-// This needs to be done in 2 places, G4Hits are generated when a G4 track enters a new
-// volume (or is created). Here you give it an initial value. When the G4 track leaves
-// the volume the final value needs to be set.
-// The places to do this is marked by //implement your own here//
-//
-// As guidance you can look at the total (integrated over all steps in a volume) energy
-// deposit which should always be saved.
-// Additionally the total ionization energy is saved - this can be removed if you are not
-// interested in this. Naturally you may want remove these comments in your version
-//
-//____________________________________________________________________________..
-
-
 /*
 
 incident particle:
@@ -43,8 +24,8 @@ getGlobalTime
 */
 
 #include "dRichSteppingAction.h"
-
 #include "dRichDetector.h"
+#include "dRichHit.h"
 
 #include <phparameter/PHParameters.h>
 
@@ -126,15 +107,16 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   G4TouchableHandle preTouch = aStep->GetPreStepPoint()->GetTouchableHandle();
   G4TouchableHandle postTouch = aStep->GetPostStepPoint()->GetTouchableHandle();
   // get volume of the current step
-  G4VPhysicalVolume *volume = preTouch->GetVolume();
-  // IsInDetector(volume) returns
+  G4VPhysicalVolume *preVol = preTouch->GetVolume();
+  G4VPhysicalVolume *postVol = postTouch->GetVolume();
+  // IsInDetector(preVol) returns
   //  == 0 outside of detector
   //  > 0 for hits in active volume
   //  < 0 for hits in passive material
-  int whichactive = m_Detector->IsInDetector(volume);
+  int whichactive = m_Detector->IsInDetector(preVol);
   if(!whichactive) return false;
 
-  cout << "[_____] in " << volume->GetName() << ", whichactive=" << whichactive << endl;
+  cout << "[_____] in " << preVol->GetName() << ", whichactive=" << whichactive << endl;
 
   // collect energy and track length step by step
   G4double edep = aStep->GetTotalEnergyDeposit() / GeV;
@@ -184,7 +166,7 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
           << PHG4StepStatusDecode::GetStepStatus(m_SavePostStepStatus) << endl;
         cout << "last track: " << m_SaveTrackId
           << ", current trackid: " << aTrack->GetTrackID() << endl;
-        cout << "phys pre vol: " << volume->GetName()
+        cout << "phys pre vol: " << preVol->GetName()
           << " post vol : " << postTouch->GetVolume()->GetName() << endl;
         cout << " previous phys pre vol: " << m_SaveVolPre->GetName()
           << " previous phys post vol: " << m_SaveVolPost->GetName() << endl;
@@ -194,19 +176,19 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
     case fUndefined:
       if(!m_Hit) {
         cout << "[+] make new hit" << endl;
-        m_Hit = new PHG4Hitv1();
+        m_Hit = new dRichHit();
       }
 
 
       ///*// diagnostic printout
       if(prePoint->GetStepStatus()==fGeomBoundary) {
         cout << "[+] prepoint at geometry boundary" << endl;
-        //cout << "[+]   preTouch volume  = " << volume->GetName() << endl;
+        //cout << "[+]   preTouch volume  = " << preVol->GetName() << endl;
         cout << "[+]   prePoint  volume = " << prePoint->GetPhysicalVolume()->GetName() << endl;
         cout << "[+]   postPoint volume = " << postPoint->GetPhysicalVolume()->GetName() << endl;
       } else {
         cout << "[+] prepoint has unknown status" << endl;
-        //cout << "[+]   preTouch volume  = " << volume->GetName() << endl;
+        //cout << "[+]   preTouch volume  = " << preVol->GetName() << endl;
         cout << "[+]   prePoint  volume = " << prePoint->GetPhysicalVolume()->GetName() << endl;
         cout << "[+]   postPoint volume = " << postPoint->GetPhysicalVolume()->GetName() << endl;
       };
@@ -243,8 +225,9 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
         << " previous phys post vol: " << m_SaveVolPost->GetName() << endl;
       */
         
-      // set petal number
-      m_Hit->set_layer(m_Detector->GetPetal(volume));
+      // set PSST identifiers
+      m_Hit->set_petal(m_Detector->GetPetal(preVol));
+      m_Hit->set_psst(m_Detector->GetPSST(postVol));
       // here we set the entrance values in cm
       m_Hit->set_x(0, prePoint->GetPosition().x() / cm);
       m_Hit->set_y(0, prePoint->GetPosition().y() / cm);
@@ -303,7 +286,7 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
       << PHG4StepStatusDecode::GetStepStatus(m_SavePostStepStatus) << endl;
     cout << "last track: " << m_SaveTrackId
       << ", current trackid: " << aTrack->GetTrackID() << endl;
-    cout << "phys pre vol: " << volume->GetName()
+    cout << "phys pre vol: " << preVol->GetName()
       << " post vol : " << postTouch->GetVolume()->GetName() << endl;
     cout << " previous phys pre vol: " << m_SaveVolPre->GetName()
       << " previous phys post vol: " << m_SaveVolPost->GetName() << endl;
@@ -326,8 +309,8 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   // to identify impossible hits and subsequent debugging printout
   m_SavePreStepStatus = prePoint->GetStepStatus();
   m_SavePostStepStatus = postPoint->GetStepStatus();
-  m_SaveVolPre = volume;
-  m_SaveVolPost = postTouch->GetVolume();
+  m_SaveVolPre = preVol;
+  m_SaveVolPost = postVol;
 
   // here we just update the exit values, it will be overwritten
   // for every step until we leave the volume or the particle
@@ -388,7 +371,7 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
       }
 
       // transfer ownership to container
-      m_SaveHitContainer->AddHit(m_Detector->GetPetal(volume), m_Hit);
+      m_SaveHitContainer->AddHit(m_Detector->GetPetal(preVol), m_Hit);
       // then set to null so we will create a new hit for the next track
       m_Hit = nullptr;
     }
