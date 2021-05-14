@@ -7,7 +7,9 @@
 
 #include <fun4all/SubsysReco.h>
 #include <Rtypes.h>
+#include <TString.h>
 #include <Geant4/G4ThreeVector.hh>
+#include <Geant4/G4String.hh>
 
 //class Fun4AllHistoManager; //---
 class PHCompositeNode;
@@ -56,10 +58,15 @@ class dRichTree : public SubsysReco
 
     Int_t evnum;
     Int_t trackID;
-    Int_t petal,psst;
-    Double_t photonHit[3]; // [xyz]
-    Double_t photonP[3]; // [xyz]
-    Double_t photonDeltaT;
+    Int_t petal,psst,pdg;
+    char particleName[128];
+    char process[256];
+    Double_t photHitPos[3]; // [xyz]
+    Double_t photP[3];
+    Double_t photPdir[3];
+    Double_t photVtxPos[3];
+    Double_t photVtxPdir[3];
+    Double_t photDeltaT;
 
 };
 

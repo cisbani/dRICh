@@ -128,9 +128,15 @@ void dRichTree::getHits(PHCompositeNode *topNode) {
     trackID = (Int_t) hit->get_trkid();
     petal = (Int_t) hit->get_petal();
     psst = (Int_t) hit->get_psst();
-    vectorToArray( hit->get_position(1), photonHit );
-    vectorToArray( hit->get_momentum(), photonP );
-    photonDeltaT = (Double_t) hit->get_delta_t();
+    pdg = (Int_t) hit->get_pdg();
+    strcpy(particleName,hit->get_particle_name().c_str());
+    strcpy(process,hit->get_process().c_str());
+    vectorToArray( hit->get_position(1), photHitPos );
+    vectorToArray( hit->get_momentum(), photP );
+    vectorToArray( hit->get_momentum_dir(), photPdir );
+    vectorToArray( hit->get_vertex_position(), photVtxPos );
+    vectorToArray( hit->get_vertex_momentum_dir(), photVtxPdir );
+    photDeltaT = (Double_t) hit->get_delta_t();
     m_tree->Fill();
   };
 
@@ -153,9 +159,15 @@ void dRichTree::initTrees() {
   m_tree->Branch("trackID",&trackID,"trackID/I");
   m_tree->Branch("petal",&petal,"petal/I");
   m_tree->Branch("psst",&psst,"psst/I");
-  m_tree->Branch("photonHit",photonHit,"photonHit[3]/D");
-  m_tree->Branch("photonP",photonP,"photonP[3]/D");
-  m_tree->Branch("photonDeltaT",&photonDeltaT,"photonDeltaT/D");
+  m_tree->Branch("pdg",&pdg,"pdg/I");
+  m_tree->Branch("particleName",particleName,"particleName/C");
+  m_tree->Branch("process",process,"process/C");
+  m_tree->Branch("photHitPos",photHitPos,"photHitPos[3]/D");
+  m_tree->Branch("photP",photP,"photP[3]/D");
+  m_tree->Branch("photPdir",photPdir,"photPdir[3]/D");
+  m_tree->Branch("photVtxPos",photVtxPos,"photVtxPos[3]/D");
+  m_tree->Branch("photVtxPdir",photVtxPdir,"photVtxPdir[3]/D");
+  m_tree->Branch("photDeltaT",&photDeltaT,"photDeltaT/D");
 };
 
 
@@ -165,7 +177,7 @@ void dRichTree::initTrees() {
 void dRichTree::resetVars() {
   evnum = 0;
   trackID = -999;
-  for(int c=0; c<3; c++) photonHit[c]=-999;
-  photonDeltaT=-999;
+  for(int c=0; c<3; c++) photHitPos[c]=-999;
+  photDeltaT=-999;
 };
 */

@@ -344,8 +344,14 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
       m_Hit->set_petal(m_Detector->GetPetal(preVol));
       m_Hit->set_psst(m_Detector->GetPSST(postVol));
       // PSST hit and track info
+      m_Hit->set_pdg(aTrack->GetParticleDefinition()->GetPDGEncoding());
+      m_Hit->set_particle_name(aTrack->GetParticleDefinition()->GetParticleName());
+      m_Hit->set_process(aTrack->GetCreatorProcess()->GetProcessName());
       m_Hit->set_position(1, postPoint->GetPosition() / cm);
       m_Hit->set_momentum(aTrack->GetMomentum() / eV);
+      m_Hit->set_momentum_dir(aTrack->GetMomentumDirection() /*unitless*/);
+      m_Hit->set_vertex_position(aTrack->GetVertexPosition() / cm);
+      m_Hit->set_vertex_momentum_dir(aTrack->GetVertexMomentumDirection() /*unitless*/);
       m_Hit->set_t(1, postPoint->GetGlobalTime() / nanosecond);
       // hit momentum
       // -----
