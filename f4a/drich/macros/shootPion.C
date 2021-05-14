@@ -1,6 +1,12 @@
 #ifndef MACRO_SHOOTPION_C
 #define MACRO_SHOOTPION_C
 
+// load libs
+R__LOAD_LIBRARY(libfun4all.so)
+R__LOAD_LIBRARY(libg4detectors.so)
+R__LOAD_LIBRARY(libdRich.so)
+R__LOAD_LIBRARY(libg4histos.so)
+
 // in fun4all singularity container, these include directives
 // are with respect to $ROOT_INCLUDE_PATH
 
@@ -27,11 +33,6 @@
 // - $G4_MAIN/include
 #include <Geant4/G4SystemOfUnits.hh>
 
-// load libs
-R__LOAD_LIBRARY(libfun4all.so)
-R__LOAD_LIBRARY(libg4detectors.so)
-R__LOAD_LIBRARY(libdRich.so)
-R__LOAD_LIBRARY(libg4histos.so)
 
 void shootPion(int nEvents = -1, Bool_t enableGUI=false) {
 

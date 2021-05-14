@@ -128,9 +128,8 @@ void dRichTree::getHits(PHCompositeNode *topNode) {
     trackID = (Int_t) hit->get_trkid();
     petal = (Int_t) hit->get_petal();
     psst = (Int_t) hit->get_psst();
-    photonHit[0] = (Double_t) hit->get_x(1);
-    photonHit[1] = (Double_t) hit->get_y(1);
-    photonHit[2] = (Double_t) hit->get_z(1);
+    vectorToArray( hit->get_position(1), photonHit );
+    vectorToArray( hit->get_momentum(), photonP );
     photonDeltaT = (Double_t) hit->get_delta_t();
     m_tree->Fill();
   };
@@ -140,6 +139,14 @@ void dRichTree::getHits(PHCompositeNode *topNode) {
 
 
 //---------------------------------------------
+void dRichTree::vectorToArray(
+  G4ThreeVector vec, Double_t *arr) {
+  arr[0] = (Double_t) vec.x();
+  arr[1] = (Double_t) vec.y();
+  arr[2] = (Double_t) vec.z();
+};
+
+//---------------------------------------------
 void dRichTree::initTrees() {
   m_tree = new TTree("tree","tree");
   m_tree->Branch("evnum",&evnum,"evnum/I");
@@ -147,6 +154,7 @@ void dRichTree::initTrees() {
   m_tree->Branch("petal",&petal,"petal/I");
   m_tree->Branch("psst",&psst,"psst/I");
   m_tree->Branch("photonHit",photonHit,"photonHit[3]/D");
+  m_tree->Branch("photonP",photonP,"photonP[3]/D");
   m_tree->Branch("photonDeltaT",&photonDeltaT,"photonDeltaT/D");
 };
 

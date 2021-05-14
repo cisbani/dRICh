@@ -2,11 +2,6 @@
 
 #include <phool/phool.h>
 
-#include <climits>
-#include <cmath>
-#include <cstdlib>
-#include <string>
-#include <utility>
 
 using std::cout;
 using std::cerr;
@@ -14,15 +9,13 @@ using std::endl;
 
 dRichHit::dRichHit(const PHG4Hit *g4hit) { CopyFrom(g4hit); };
 
-void dRichHit::Reset() {
+void dRichHit::Reset() { // TODO: make sure this is filled out
   hitid = ULONG_LONG_MAX;
   trackid = INT_MIN;
   showerid = INT_MIN;
   edep = NAN;
   for(int i=0; i<2; i++) {
-    set_x(i,NAN);
-    set_y(i,NAN);
-    set_z(i,NAN);
+    set_position(i,G4ThreeVector(NAN,NAN,NAN));
     set_t(i,NAN);
   };
 };

@@ -10,6 +10,10 @@
 #include <cstdint>
 #include <iostream>
 #include <map>
+#include <string>
+#include <utility>
+
+#include <G4ThreeVector.hh>
 
 class dRichHit : public PHG4Hit
 {
@@ -21,10 +25,13 @@ class dRichHit : public PHG4Hit
 
     // accessors
     int get_trkid() const { return trackid; }
-    float get_x(const int i) const { return x[i]; } // i:
-    float get_y(const int i) const { return y[i]; } //  0=entry
-    float get_z(const int i) const { return z[i]; } //  1=exit
+    G4ThreeVector get_position(const int i) const {
+      return posVec[i]; } // 0=entry, 1=exit
+    float get_x(const int i) const { return posVec[i].x(); }
+    float get_y(const int i) const { return posVec[i].y(); }
+    float get_z(const int i) const { return posVec[i].z(); }
     float get_t(const int i) const { return t[i]; }
+    G4ThreeVector get_momentum() const { return momVec; }
     float get_delta_t() const { return t[1]-t[0]; }
     int get_petal() const { return petal; }
     int get_psst() const { return psst; }
@@ -35,9 +42,9 @@ class dRichHit : public PHG4Hit
     int get_shower_id() const { return showerid; }
 
     // modifiers
-    void set_x(const int i, const float f) { x[i] = f; }
-    void set_y(const int i, const float f) { y[i] = f; }
-    void set_z(const int i, const float f) { z[i] = f; }
+    void set_position(const int i, const G4ThreeVector v) {
+      posVec[i] = v; }
+    void set_momentum(const G4ThreeVector v) { momVec = v; }
     void set_t(const int i, const float f) { t[i] = f; }
     void set_petal(const int i) { petal = i; }
     void set_psst(const int i) { psst = i; }
@@ -58,6 +65,8 @@ class dRichHit : public PHG4Hit
     float y[2] = {NAN, NAN};
     float z[2] = {NAN, NAN};
     float t[2] = {NAN, NAN};
+    G4ThreeVector posVec[2];
+    G4ThreeVector momVec;
     int petal = INT_MIN;
     int psst = INT_MIN;
     PHG4HitDefs::keytype hitid = ULONG_LONG_MAX;

@@ -225,14 +225,8 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
         << " previous phys post vol: " << m_SaveVolPost->GetName() << endl;
       */
         
-      // set PSST identifiers
-      m_Hit->set_petal(m_Detector->GetPetal(preVol));
-      m_Hit->set_psst(m_Detector->GetPSST(postVol));
-      // here we set the entrance values in cm
-      m_Hit->set_x(0, prePoint->GetPosition().x() / cm);
-      m_Hit->set_y(0, prePoint->GetPosition().y() / cm);
-      m_Hit->set_z(0, prePoint->GetPosition().z() / cm);
-      // time in ns
+      // entrance position and time
+      m_Hit->set_position(0, prePoint->GetPosition() / cm);
       m_Hit->set_t(0, prePoint->GetGlobalTime() / nanosecond);
       // set the track ID
       m_Hit->set_trkid(aTrack->GetTrackID());
@@ -346,11 +340,16 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
                            << "," << postPoint->GetPosition().z() / cm
                            << ")" << endl;
 
-      // update values at exit coordinates and set keep flag of track to keep
-      m_Hit->set_x(1, postPoint->GetPosition().x() / cm);
-      m_Hit->set_y(1, postPoint->GetPosition().y() / cm);
-      m_Hit->set_z(1, postPoint->GetPosition().z() / cm);
+      // set PSST identifiers
+      m_Hit->set_petal(m_Detector->GetPetal(preVol));
+      m_Hit->set_psst(m_Detector->GetPSST(postVol));
+      // PSST hit and track info
+      m_Hit->set_position(1, postPoint->GetPosition() / cm);
+      m_Hit->set_momentum(aTrack->GetMomentum() / eV);
       m_Hit->set_t(1, postPoint->GetGlobalTime() / nanosecond);
+      // hit momentum
+      // -----
+
       printf("track info ptr @ 0x%p\n",(void*)aTrack->GetUserInformation());
       if(G4VUserTrackInformation *p = aTrack->GetUserInformation()) {
         cout << "[+] here" << endl;
