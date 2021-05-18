@@ -36,7 +36,7 @@ class dRichHit : public PHG4Hit
     G4ThreeVector get_vertex_position() const { return vtxPos; }
     G4ThreeVector get_vertex_momentum_dir() const { return vtxMomDir; }
     float get_delta_t() const { return t[1]-t[0]; }
-    int get_hit_type() const { return hitType; }
+    G4String get_hit_type_name() const { return hitType; }
     int get_petal() const { return petal; }
     int get_psst() const { return psst; }
     int get_pdg() const { return pdg; }
@@ -56,7 +56,7 @@ class dRichHit : public PHG4Hit
     void set_vertex_position(const G4ThreeVector v) { vtxPos = v; }
     void set_vertex_momentum_dir(const G4ThreeVector v) { vtxMomDir = v; }
     void set_t(const int i, const float f) { t[i] = f; }
-    void set_hit_type(const int i) { hitType = i; }
+    void set_hit_type_name(const G4String s) { hitType = s; }
     void set_petal(const int i) { petal = i; }
     void set_psst(const int i) { psst = i; }
     void set_pdg(const int i) { pdg = i; }
@@ -82,7 +82,7 @@ class dRichHit : public PHG4Hit
     float t[2] = {NAN, NAN};
     G4ThreeVector hitPos[2];
     G4ThreeVector momVec,momDir,vtxPos,vtxMomDir;
-    int hitType = INT_MIN;
+    G4String hitType;
     int petal = INT_MIN;
     int psst = INT_MIN;
     int pdg = INT_MIN;

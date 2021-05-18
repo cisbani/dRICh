@@ -123,9 +123,12 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   if(verbose && isIncident)
     cout << "[__] step is INCIDENT on vessel" << endl;
 
-  // boolean, which if false, particle is incident on vessel, but
-  // perhaps not thrown by the event generator (e.g., a secondary)
-  bool thrownInc = true;
+  // define some booleans for classification
+  bool thrownInc = true; // if false, particle is incident on vessel,
+                         // but perhaps not thrown directly from event
+                         // generator (e.g., secondary)
+  bool postStepInc = false; // if true, incident particle defined from
+                            // PostStepDoItVector step
 
   // skip this step, if it's outside the detector and not incident
   // on the vessel
@@ -187,6 +190,7 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
             << " previous phys post vol: " << m_SaveVolPost->GetName() << endl;
         } else {
           thrownInc = false; // incident particle step from PostStepDoItVector
+          postStepInc = true;
         }
       }
 
@@ -323,6 +327,7 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   // this volume and we consider saving the hit
   enum hitTypes {hIncident,hIncidentAtypical,hPSST,hIgnore};
   int hitType;
+  G4String hitTypeStr;
   int petal = isIncident ? 0 : m_Detector->GetPetal(preVol);
   if(postPoint->GetStepStatus() == fGeomBoundary /*left volume*/
   || postPoint->GetStepStatus() == fWorldBoundary /*left world*/
@@ -343,30 +348,32 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
     else if(isIncident)
       hitType = thrownInc ? hIncident : hIncidentAtypical;
     else hitType = hIgnore;
+    // set string
+    switch(hitType) {
+      case hPSST: hitTypeStr = "psst"; break;
+      case hIncident: hitTypeStr = "incident"; break;
+      case hIncidentAtypical: hitTypeStr = "incidentAtypical"; break;
+      default: hitTypeStr = "UNKNOWN";
+    }
 
 
     // hits to keep +++++++++++++++++++++++
     if(hitType != hIgnore) {
 
-      if(verbose) {
-        cout << "[-+] ";
-        switch(hitType) {
-          case hPSST: cout << "PSST"; break;
-          case hIncident: cout << "incident"; break;
-          case hIncidentAtypical: cout << "incidentAtypical"; break;
-        }
-        cout << " hit, KEEP!" << endl;
-      }
+      if(verbose)
+        cout << "[-+] " << hitTypeStr << " hit, KEEP!" << endl;
 
       // set hit vars
-      m_Hit->set_hit_type(hitType);
+      m_Hit->set_hit_type_name(hitTypeStr);
       m_Hit->set_petal(petal);
       m_Hit->set_psst(m_Detector->GetPSST(postVol));
       m_Hit->set_pdg(aTrack->GetParticleDefinition()->GetPDGEncoding());
       m_Hit->set_particle_name(aTrack->GetParticleDefinition()->GetParticleName());
       switch(hitType) {
         case hPSST:
-          m_Hit->set_process(aTrack->GetCreatorProcess()->GetProcessName());
+        case hIncidentAtypical:
+          if(postStepInc) m_Hit->set_process("postStepDoItVector");
+          else m_Hit->set_process(aTrack->GetCreatorProcess()->GetProcessName());
           break;
         case hIncident:
           m_Hit->set_process("incident");

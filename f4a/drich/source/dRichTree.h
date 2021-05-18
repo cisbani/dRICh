@@ -58,7 +58,7 @@ class dRichTree : public SubsysReco
 
     Int_t evnum;
     Int_t trackID;
-    Int_t hitType;
+    char hitType[128];
     Int_t petal,psst,pdg;
     char particleName[128];
     char process[256];
