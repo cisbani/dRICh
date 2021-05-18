@@ -65,7 +65,7 @@ void dRichDetector::ConstructMe(G4LogicalVolume *logicWorld) {
   // - check existence
   std::ifstream mf(cfg.model_file.data());
   if(!mf.is_open()) {
-    cerr << "[+] ERROR: cannot find MODEL TEXT FILE" << endl;
+    cerr << "[+] ERROR in dRichDetector: cannot find MODEL TEXT FILE" << endl;
     return;
   };
   mf.close();
@@ -169,7 +169,7 @@ int dRichDetector::GetPetal(G4VPhysicalVolume *volu) {
   int petalNum;
   try { petalNum = m_PetalMap.at(volu); }
   catch(const std::out_of_range &ex) {
-    cerr << "ERROR: cannot find petal associated with volume" << endl;
+    cerr << "ERROR in dRichDetector: cannot find petal associated with volume" << endl;
     return -1;
   };
   return petalNum;
@@ -179,7 +179,6 @@ int dRichDetector::GetPetal(G4VPhysicalVolume *volu) {
 // ---------------------------------------------------
 // get PSST number
 int dRichDetector::GetPSST(G4VPhysicalVolume *volu) {
-  cout << "DEBUG" << volu->GetName() << endl;
   return volu->GetName().contains("psst") ?
     volu->GetCopyNo() : 0;
 };

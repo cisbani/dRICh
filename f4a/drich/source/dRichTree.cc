@@ -126,11 +126,13 @@ void dRichTree::getHits(PHCompositeNode *topNode) {
     };
 
     trackID = (Int_t) hit->get_trkid();
+    hitType = (Int_t) hit->get_hit_type();
     petal = (Int_t) hit->get_petal();
     psst = (Int_t) hit->get_psst();
     pdg = (Int_t) hit->get_pdg();
     strcpy(particleName,hit->get_particle_name().c_str());
     strcpy(process,hit->get_process().c_str());
+    parentID = (Int_t) hit->get_parent_id();
     vectorToArray( hit->get_position(1), photHitPos );
     vectorToArray( hit->get_momentum(), photP );
     vectorToArray( hit->get_momentum_dir(), photPdir );
@@ -157,11 +159,13 @@ void dRichTree::initTrees() {
   m_tree = new TTree("tree","tree");
   m_tree->Branch("evnum",&evnum,"evnum/I");
   m_tree->Branch("trackID",&trackID,"trackID/I");
+  m_tree->Branch("hitType",&hitType,"hitType/I");
   m_tree->Branch("petal",&petal,"petal/I");
   m_tree->Branch("psst",&psst,"psst/I");
   m_tree->Branch("pdg",&pdg,"pdg/I");
   m_tree->Branch("particleName",particleName,"particleName/C");
   m_tree->Branch("process",process,"process/C");
+  m_tree->Branch("parentID",&parentID,"parentID/I");
   m_tree->Branch("photHitPos",photHitPos,"photHitPos[3]/D");
   m_tree->Branch("photP",photP,"photP[3]/D");
   m_tree->Branch("photPdir",photPdir,"photPdir[3]/D");

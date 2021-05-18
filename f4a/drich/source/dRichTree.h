@@ -58,9 +58,11 @@ class dRichTree : public SubsysReco
 
     Int_t evnum;
     Int_t trackID;
+    Int_t hitType;
     Int_t petal,psst,pdg;
     char particleName[128];
     char process[256];
+    Int_t parentID;
     Double_t photHitPos[3]; // [xyz]
     Double_t photP[3];
     Double_t photPdir[3];

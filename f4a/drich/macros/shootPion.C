@@ -95,10 +95,12 @@ void shootPion(int nEvents = -1, Bool_t enableGUI=false) {
   f4a->registerSubsystem(outTree);
 
   // output manager
+  /*
   Fun4AllDstOutputManager *outMgr = 
     new Fun4AllDstOutputManager("DSTOUT","dRichHits.root");
   outMgr->Verbosity(10);
   f4a->registerOutputManager(outMgr);
+  */
 
   // dummy input manager, to drive event loop
   Fun4AllInputManager *inMgr =

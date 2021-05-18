@@ -1,28 +1,3 @@
-/*
-
-incident particle:
-entry window 4-momentum
-exit window 4-momentum
-
-pmt: getCopyNumber
-
-photon track:
-getPosition
-momentumDirection
-momentum
-vertexPosition (of cherenkov photon, emitted from incident particle)
-vertexMomentumDirection
-PDGEncoding
-parentID
-
-step:
-getTotalEnergyDeposit # probably useful for non-optical particle
-
-time:
-getGlobalTime
-
-*/
-
 #include "dRichSteppingAction.h"
 #include "dRichDetector.h"
 #include "dRichHit.h"
@@ -86,16 +61,18 @@ dRichSteppingAction::dRichSteppingAction(dRichDetector *detector, const PHParame
   , m_ActiveFlag(m_Params->get_int_param("active"))
   , m_EdepSum(0)
   , m_EionSum(0)
+  , verbose(true)
 {
 }
 
 //____________________________________________________________________________..
 dRichSteppingAction::~dRichSteppingAction()
 {
-  // if the last hit was a zero energie deposit hit, it is just reset
-  // and the memory is still allocated, so we need to delete it here
-  // if the last hit was saved, hit is a nullptr pointer which are
-  // legal to delete (it results in a no operation)
+  // if the last hit was a zero energy deposit hit, it is
+  // just reset and the memory is still allocated, so we
+  // need to delete it here if the last hit was saved, hit
+  // is a nullptr pointer which are legal to delete (it
+  // results in a no operation)
   delete m_Hit;
 }
 
@@ -103,31 +80,70 @@ dRichSteppingAction::~dRichSteppingAction()
 // This is the implementation of the G4 UserSteppingAction
 bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
 {
-  //cout << "[+++++] call dRichSteppingAction::UserSteppingAction" << endl;
+
+  if(verbose)
+     cout << "[>>>>>] call dRichSteppingAction::UserSteppingAction" << endl;
+
+  // get touchables, points, volumes
   G4TouchableHandle preTouch = aStep->GetPreStepPoint()->GetTouchableHandle();
   G4TouchableHandle postTouch = aStep->GetPostStepPoint()->GetTouchableHandle();
-  // get volume of the current step
   G4VPhysicalVolume *preVol = preTouch->GetVolume();
   G4VPhysicalVolume *postVol = postTouch->GetVolume();
+  G4StepPoint *prePoint = aStep->GetPreStepPoint();
+  G4StepPoint *postPoint = aStep->GetPostStepPoint();
+
+  // skip this step, if leaving the world
+  if(postPoint->GetStepStatus() == fWorldBoundary) {
+    if(verbose) cout << "... skip this step (leaving world)" << endl;
+    if(m_Hit) m_Hit->Reset();
+    return false;
+  };
+
+  // get track
+  const G4Track *aTrack = aStep->GetTrack();
+  if(verbose)
+    cout << "[-] track ID=" << aTrack->GetTrackID()
+         << ", particle=" << aTrack->GetParticleDefinition()->GetParticleName()
+         << endl;
+
   // IsInDetector(preVol) returns
   //  == 0 outside of detector
   //  > 0 for hits in active volume
   //  < 0 for hits in passive material
   int whichactive = m_Detector->IsInDetector(preVol);
-  if(!whichactive) return false;
+  if(verbose)
+    cout << "[_] step preVol=" << preVol->GetName()
+         << ", postVol=" << postVol->GetName()
+         << ", whichactive=" << whichactive
+         << endl;
 
-  cout << "[_____] in " << preVol->GetName() << ", whichactive=" << whichactive << endl;
+  // check if this particle is incident on the vessel
+  bool isIncident = preVol->GetName().contains("World")
+                && postVol->GetName().contains("DRICHvessel");
+  if(verbose && isIncident)
+    cout << "[__] step is INCIDENT on vessel" << endl;
 
-  // collect energy and track length step by step
-  G4double edep = aStep->GetTotalEnergyDeposit() / GeV;
-  G4double eion = (aStep->GetTotalEnergyDeposit() - aStep->GetNonIonizingEnergyDeposit()) / GeV;
-  const G4Track *aTrack = aStep->GetTrack();
-  cout << "[_]  track " << aTrack->GetTrackID()
-       << " is " << aTrack->GetParticleDefinition()->GetParticleName()
-       << endl;
-  printf("  track info @ 0x%p\n",(void*)aTrack->GetUserInformation());
-  G4StepPoint *prePoint = aStep->GetPreStepPoint();
-  G4StepPoint *postPoint = aStep->GetPostStepPoint();
+  // boolean, which if false, particle is incident on vessel, but
+  // perhaps not thrown by the event generator (e.g., a secondary)
+  bool thrownInc = true;
+
+  // skip this step, if it's outside the detector and not incident
+  // on the vessel
+  if(!whichactive && !isIncident) {
+    if(verbose) cout << "... skip this step" << endl;
+    return false;
+  };
+
+  // get step energy // TODO: do we need `eion`?
+  G4double edep = 0;
+  G4double eion = 0;
+  if(!isIncident) {
+    edep = aStep->GetTotalEnergyDeposit() / GeV;
+    eion = (aStep->GetTotalEnergyDeposit() - aStep->GetNonIonizingEnergyDeposit()) / GeV;
+  };
+  if(verbose)
+    cout << "[_] step edep=" << edep << ", eion=" << eion << endl;
+
 
   // Here we have to decide if we need to create a new hit.  Normally this should 
   // only be neccessary if a G4 Track enters a new volume or is freshly created
@@ -140,135 +156,125 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   // still check for them for safety. We can reproduce G4 runs identically (if given
   // the sequence of random number seeds you find in the log), the printouts help
   // us giving the G4 support information about those failures
-  // 
-  switch(prePoint->GetStepStatus())
-  {
-    // -- abnormal cases
+  switch(prePoint->GetStepStatus()) {
+
+    // --- abnormal cases
     case fPostStepDoItProc: // step defined by PostStepDoItVector
-      if (m_SavePostStepStatus != fGeomBoundary)
-      {
+      if(m_SavePostStepStatus != fGeomBoundary) {
         // this is the okay case, fPostStepDoItProc called in a volume, not first thing inside
         // a new volume, just proceed here
-        break;
+        if(verbose) cout << "[__] first step in a new volume" << endl;
+      } else {
+        if(verbose) cout << "[ + ] step was defined by PostStepDoItVector" << endl;
+        if(!isIncident) {
+          // this is an impossible G4 Step print out diagnostic to help debug, not sure if
+          // this is still with us
+          cerr << "ERROR: impossible G4 Step" << endl;
+          cout << GetName() << ": New Hit for  " << endl;
+          cout << "prestep status: "
+            << PHG4StepStatusDecode::GetStepStatus(prePoint->GetStepStatus())
+            << ", poststep status: "
+            << PHG4StepStatusDecode::GetStepStatus(postPoint->GetStepStatus())
+            << ", last pre step status: "
+            << PHG4StepStatusDecode::GetStepStatus(m_SavePreStepStatus)
+            << ", last post step status: "
+            << PHG4StepStatusDecode::GetStepStatus(m_SavePostStepStatus) << endl;
+          cout << "last track: " << m_SaveTrackId
+            << ", current trackid: " << aTrack->GetTrackID() << endl;
+          cout << "phys pre vol: " << preVol->GetName()
+            << " post vol : " << postTouch->GetVolume()->GetName() << endl;
+          cout << " previous phys pre vol: " << m_SaveVolPre->GetName()
+            << " previous phys post vol: " << m_SaveVolPost->GetName() << endl;
+        } else {
+          thrownInc = false; // incident particle step from PostStepDoItVector
+        }
       }
-      else
-      {
-        // this is an impossible G4 Step print out diagnostic to help debug, not sure if
-        // this is still with us
-        cout << GetName() << ": New Hit for  " << endl;
-        cout << "prestep status: "
-          << PHG4StepStatusDecode::GetStepStatus(prePoint->GetStepStatus())
-          << ", poststep status: "
-          << PHG4StepStatusDecode::GetStepStatus(postPoint->GetStepStatus())
-          << ", last pre step status: "
-          << PHG4StepStatusDecode::GetStepStatus(m_SavePreStepStatus)
-          << ", last post step status: "
-          << PHG4StepStatusDecode::GetStepStatus(m_SavePostStepStatus) << endl;
-        cout << "last track: " << m_SaveTrackId
-          << ", current trackid: " << aTrack->GetTrackID() << endl;
-        cout << "phys pre vol: " << preVol->GetName()
-          << " post vol : " << postTouch->GetVolume()->GetName() << endl;
-        cout << " previous phys pre vol: " << m_SaveVolPre->GetName()
-          << " previous phys post vol: " << m_SaveVolPost->GetName() << endl;
+
+      // if this step is incident on the vessel, and we have not yet created a
+      // hit, create one
+      if(isIncident) {
+        m_Hit = nullptr; // kill any leftover hit
+        if(verbose) cout << "[++++] NEW hit (incident)" << endl;
+        m_Hit = new dRichHit();
+        // set some entrance attributes, and track ID
+        m_Hit->set_position(0, prePoint->GetPosition() / cm);
+        m_Hit->set_t(0, prePoint->GetGlobalTime() / nanosecond);
+        m_Hit->set_trkid(aTrack->GetTrackID());
+        m_SaveTrackId = aTrack->GetTrackID();
+        m_SaveHitContainer = m_HitContainer;
       }
-    // -- normal cases
+      break;
+
+    // --- normal cases
     case fGeomBoundary:
     case fUndefined:
+    default:
+
+      // do nothing if not geometry boundary, not undefined, and not incident
+      if(  ! prePoint->GetStepStatus()==fGeomBoundary
+        && ! prePoint->GetStepStatus()==fUndefined
+        && ! isIncident
+      ) {
+        if(verbose) cout << "[+] prepoint status ignored" << endl;
+        break;
+      };
+
+      // create new track
       if(!m_Hit) {
-        cout << "[+] make new hit" << endl;
+        if(verbose) cout << "[++++] NEW hit" << endl;
         m_Hit = new dRichHit();
       }
 
-
-      ///*// diagnostic printout
-      if(prePoint->GetStepStatus()==fGeomBoundary) {
-        cout << "[+] prepoint at geometry boundary" << endl;
-        //cout << "[+]   preTouch volume  = " << preVol->GetName() << endl;
-        cout << "[+]   prePoint  volume = " << prePoint->GetPhysicalVolume()->GetName() << endl;
-        cout << "[+]   postPoint volume = " << postPoint->GetPhysicalVolume()->GetName() << endl;
-      } else {
-        cout << "[+] prepoint has unknown status" << endl;
-        //cout << "[+]   preTouch volume  = " << preVol->GetName() << endl;
-        cout << "[+]   prePoint  volume = " << prePoint->GetPhysicalVolume()->GetName() << endl;
-        cout << "[+]   postPoint volume = " << postPoint->GetPhysicalVolume()->GetName() << endl;
+      // print info
+      if(verbose) {
+        cout << "[+] prepoint status=";
+        if(prePoint->GetStepStatus()==fGeomBoundary) cout << "fGeomBoundary";
+        else if(prePoint->GetStepStatus()==fUndefined) cout << "fUndefined";
+        else cout << "UNKNOWN!";
+        cout << endl;
+        if(aTrack->GetTrackID()>1) {
+          cout << "[-] secondary track, creator process="
+               << aTrack->GetCreatorProcess()->GetProcessName();
+        } else {
+          cout << "[-] primary track, particle="
+               << aTrack->GetParticleDefinition()->GetParticleName();
+        };
+        cout << endl;
       };
+      
+      // check if incident particle is secondary
+      if(aTrack->GetTrackID()>1 && isIncident) thrownInc = false;
 
-      cout << "[+] track ID = " << aTrack->GetTrackID() << endl;
-      if(aTrack->GetTrackID()>1) {
-        cout << "[+] track creator process = " << aTrack->GetCreatorProcess()->GetProcessName() << endl;
-      };
-      cout << "[+] particle name = " << aTrack->GetParticleDefinition()->GetParticleName() << endl;
-      //*/
-
-        /* pre/postPoint
-         * pre/postTouch
-         * volume (=preTouch->volume)
-         * aStep
-         * aTrack
-         */
-
-      /*// diagnostic printout
-      cout << GetName() << ": New Hit for  " << endl;
-      cout << "prestep status: "
-        << PHG4StepStatusDecode::GetStepStatus(prePoint->GetStepStatus())
-        << ", poststep status: "
-        << PHG4StepStatusDecode::GetStepStatus(postPoint->GetStepStatus())
-        << ", last pre step status: "
-        << PHG4StepStatusDecode::GetStepStatus(m_SavePreStepStatus)
-        << ", last post step status: "
-        << PHG4StepStatusDecode::GetStepStatus(m_SavePostStepStatus) << endl;
-      cout << "last track: " << m_SaveTrackId
-        << ", current trackid: " << aTrack->GetTrackID() << endl;
-      cout << "phys pre vol: " << volume->GetName()
-        << " post vol : " << postTouch->GetVolume()->GetName() << endl;
-      cout << " previous phys pre vol: " << m_SaveVolPre->GetName()
-        << " previous phys post vol: " << m_SaveVolPost->GetName() << endl;
-      */
-        
-      // entrance position and time
+      // set some entrance attributes, and track ID
       m_Hit->set_position(0, prePoint->GetPosition() / cm);
       m_Hit->set_t(0, prePoint->GetGlobalTime() / nanosecond);
-      // set the track ID
       m_Hit->set_trkid(aTrack->GetTrackID());
       m_SaveTrackId = aTrack->GetTrackID();
-      // set the initial energy deposit
-      m_EdepSum = 0; // TODO: maybe we don't need this
-      // implement your own here://
-      // add the properties you are interested in via set_XXX methods
-      // you can find existing set methods in $OFFLINE_MAIN/include/g4main/PHG4Hit.h
-      // this is initialization of your value. This is not needed you can just set the final
-      // value at the last step in this volume later one
-      if(whichactive > 0)
-      {
-        m_EionSum = 0;  // assuming the ionization energy is only needed for active
-                        // volumes (scintillators)
+      m_SaveHitContainer = m_HitContainer;
+
+      // initializate accumulators (e.g., for total energy deposition)
+      m_EdepSum = 0;
+      if(whichactive > 0) {
+        m_EionSum = 0;
         m_Hit->set_eion(0);
-        m_SaveHitContainer = m_HitContainer;
       }
-      else
-      {
-        cout << "implement stuff for whichactive < 0 (inactive volumes)" << endl;
-        gSystem->Exit(1);
-      }
-      // this is for the tracking of the truth info
-      if (G4VUserTrackInformation *p = aTrack->GetUserInformation())
-      {
-        if (PHG4TrackUserInfoV1 *pp = dynamic_cast<PHG4TrackUserInfoV1 *>(p))
-        {
+
+      // tracking of the truth info // TODO: not used yet?
+      if(G4VUserTrackInformation *p = aTrack->GetUserInformation()) {
+        if(PHG4TrackUserInfoV1 *pp = dynamic_cast<PHG4TrackUserInfoV1 *>(p)) {
           m_Hit->set_trkid(pp->GetUserTrackId());
           pp->GetShower()->add_g4hit_id(m_SaveHitContainer->GetID(), m_Hit->get_hit_id());
         }
       }
-      break;
-    default:
+
       break;
   }
 
-  // This section is called for every step
-  // some sanity checks for inconsistencies (aka bugs) we have seen over the years
-  // check if this hit was created, if not print out last post step status
-  if (!m_Hit || !std::isfinite(m_Hit->get_x(0)))
-  {
+
+  // This section is called for every step -------------------------------------
+  // - some sanity checks for inconsistencies (aka bugs) we have seen over the years
+  // - check if this hit was created, if not print out last post step status
+  if(!m_Hit || !std::isfinite(m_Hit->get_x(0))) {
     cout << GetName() << ": hit was not created" << endl;
     cout << "prestep status: "
       << PHG4StepStatusDecode::GetStepStatus(prePoint->GetStepStatus())
@@ -288,8 +294,7 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
     gSystem->Exit(1);
   }
   // check if track id matches the initial one when the hit was created
-  if (aTrack->GetTrackID() != m_SaveTrackId)
-  {
+  if(aTrack->GetTrackID() != m_SaveTrackId) {
     cout << GetName() << ": hits do not belong to the same track" << endl;
     cout << "saved track: " << m_SaveTrackId
       << ", current trackid: " << aTrack->GetTrackID()
@@ -298,7 +303,6 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
     // This is fatal - a hit from nowhere. This needs to be looked at and fixed
     gSystem->Exit(1);
   }
-
   // We need to cache a few things from one step to the next
   // to identify impossible hits and subsequent debugging printout
   m_SavePreStepStatus = prePoint->GetStepStatus();
@@ -306,88 +310,110 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   m_SaveVolPre = preVol;
   m_SaveVolPost = postVol;
 
-  // here we just update the exit values, it will be overwritten
-  // for every step until we leave the volume or the particle
-  // ceases to exist
-  // sum up the energy to get total deposited
+
+  // update accumulators
   m_EdepSum += edep;
-  if (whichactive > 0)
-  {
+  if(whichactive > 0) {
     m_EionSum += eion;
   }
 
 
-  // if any of these conditions is true this is the last step in
-  // this volume and we need to save the hit
-  // postPoint->GetStepStatus() == fGeomBoundary: track leaves this volume
-  // postPoint->GetStepStatus() == fWorldBoundary: track leaves this world
-  // (happens when your detector goes outside world volume)
-  // postPoint->GetStepStatus() == fAtRestDoItProc: track stops (typically
-  // aTrack->GetTrackStatus() == fStopAndKill is also set)
-  // aTrack->GetTrackStatus() == fStopAndKill: track ends
-  if (postPoint->GetStepStatus() == fGeomBoundary ||
-      postPoint->GetStepStatus() == fWorldBoundary ||
-      postPoint->GetStepStatus() == fAtRestDoItProc ||
-      aTrack->GetTrackStatus() == fStopAndKill)
-  {
-    // save only hits on the photo sensors
-    if(prePoint->GetPhysicalVolume()->GetName().contains("DRICHpetal") &&
-       postPoint->GetPhysicalVolume()->GetName().contains("DRICHpsst")) {
+  // save the hit ---------------------------------------------
+  // if any of these conditions is true, this is the last step in
+  // this volume and we consider saving the hit
+  enum hitTypes {hIncident,hIncidentAtypical,hPSST,hIgnore};
+  int hitType;
+  int petal = isIncident ? 0 : m_Detector->GetPetal(preVol);
+  if(postPoint->GetStepStatus() == fGeomBoundary /*left volume*/
+  || postPoint->GetStepStatus() == fWorldBoundary /*left world*/
+  || postPoint->GetStepStatus() == fAtRestDoItProc /*track stops*/
+  || aTrack->GetTrackStatus() == fStopAndKill /*track ends*/
+  ) {
 
-      cout << "[+++] hit on PSST, keep this hit!" << endl
-           << "      (x,y,z) = (" << postPoint->GetPosition().x() / cm
-                           << "," << postPoint->GetPosition().y() / cm
-                           << "," << postPoint->GetPosition().z() / cm
-                           << ")" << endl;
+    // get prePoint and postPoint volume names
+    G4String preName = prePoint->GetPhysicalVolume()->GetName();
+    G4String postName = postPoint->GetPhysicalVolume()->GetName();
+    if(verbose) 
+      cout << "[---+] last step in the volume (pre=" << preName
+           << ", post=" << postName << ")" << endl;
 
-      // set PSST identifiers
-      m_Hit->set_petal(m_Detector->GetPetal(preVol));
+    // classify hit type
+    if(  preName.contains("DRICHpetal")
+      && postName.contains("DRICHpsst")) hitType = hPSST;
+    else if(isIncident)
+      hitType = thrownInc ? hIncident : hIncidentAtypical;
+    else hitType = hIgnore;
+
+
+    // hits to keep +++++++++++++++++++++++
+    if(hitType != hIgnore) {
+
+      if(verbose) {
+        cout << "[-+] ";
+        switch(hitType) {
+          case hPSST: cout << "PSST"; break;
+          case hIncident: cout << "incident"; break;
+          case hIncidentAtypical: cout << "incidentAtypical"; break;
+        }
+        cout << " hit, KEEP!" << endl;
+      }
+
+      // set hit vars
+      m_Hit->set_hit_type(hitType);
+      m_Hit->set_petal(petal);
       m_Hit->set_psst(m_Detector->GetPSST(postVol));
-      // PSST hit and track info
       m_Hit->set_pdg(aTrack->GetParticleDefinition()->GetPDGEncoding());
       m_Hit->set_particle_name(aTrack->GetParticleDefinition()->GetParticleName());
-      m_Hit->set_process(aTrack->GetCreatorProcess()->GetProcessName());
+      switch(hitType) {
+        case hPSST:
+          m_Hit->set_process(aTrack->GetCreatorProcess()->GetProcessName());
+          break;
+        case hIncident:
+          m_Hit->set_process("incident");
+          break;
+      };
+      m_Hit->set_parent_id(aTrack->GetParentID());
       m_Hit->set_position(1, postPoint->GetPosition() / cm);
       m_Hit->set_momentum(aTrack->GetMomentum() / eV);
       m_Hit->set_momentum_dir(aTrack->GetMomentumDirection() /*unitless*/);
       m_Hit->set_vertex_position(aTrack->GetVertexPosition() / cm);
       m_Hit->set_vertex_momentum_dir(aTrack->GetVertexMomentumDirection() /*unitless*/);
       m_Hit->set_t(1, postPoint->GetGlobalTime() / nanosecond);
-      // hit momentum
-      // -----
 
-      printf("track info ptr @ 0x%p\n",(void*)aTrack->GetUserInformation());
+
+      // tracking of the truth info // TODO: not used yet?
       if(G4VUserTrackInformation *p = aTrack->GetUserInformation()) {
-        cout << "[+] here" << endl;
         if(PHG4TrackUserInfoV1 *pp = dynamic_cast<PHG4TrackUserInfoV1 *>(p)) {
-          cout << "[+] set keep" << endl;
           pp->SetKeep(1);  // we want to keep the track
         }
       }
 
-      cout << "  m_EdepSum=" << m_EdepSum
-           << "  m_EionSum=" << m_EionSum
-           << endl;
-           
 
+      // total accumulators
       m_Hit->set_edep(m_EdepSum);
       if(whichactive > 0) {
         m_Hit->set_eion(m_EionSum);
       }
+      if(verbose)
+        cout << "[-+] m_EdepSum=" << m_EdepSum
+             << ", m_EionSum=" << m_EionSum
+             << endl;
+           
 
       // transfer ownership to container
-      m_SaveHitContainer->AddHit(m_Detector->GetPetal(preVol), m_Hit);
-      // then set to null so we will create a new hit for the next track
-      m_Hit = nullptr;
+      m_SaveHitContainer->AddHit(petal, m_Hit);
+      m_Hit = nullptr; // so that next track will create new hit
     }
+
     else {
-      // otherwise reset track for reuse; this means we have to delete it in
-      // the dtor. If this was the last hit we processed the memory is still
-      // allocated
-      cout << "[+++] reset hit for reuse" << endl;
+      // do not save this hit ++++++++++++++++++++++++++++
+      // - reset hit object for reuse
+      // - if last hit overall, memory still allocated
+      if(verbose) cout << "[-+] not keeping this hit" << endl;
       m_Hit->Reset();
     };
   };
+
   // return true to indicate the hit was used
   return true;
 }

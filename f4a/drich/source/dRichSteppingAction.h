@@ -28,6 +28,7 @@ class dRichSteppingAction : public PHG4SteppingAction
     virtual void SetInterfacePointers(PHCompositeNode*);
 
   private:
+
     //! pointer to the detector
     dRichDetector * m_Detector;
     const PHParameters * m_Params;
@@ -44,6 +45,7 @@ class dRichSteppingAction : public PHG4SteppingAction
     int m_ActiveFlag;
     double m_EdepSum;
     double m_EionSum;
+    bool verbose;
 };
 
 #endif // DRICHSTEPPINGACTION_H
