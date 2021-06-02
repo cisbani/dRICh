@@ -51,7 +51,7 @@ void hitHistos(TString infileN="dRichTree.root") {
   drawHisto(
       "psst_hitPos",
       "photHitPos[1]:photHitPos[0]>>psst_hitPos(500,-200,200,500,-200,200)",
-      "hitType==\"psst\"",
+      "hitType==\"psst\" && process==\"Cerenkov\"",
       "colz",
       0,0,0
       );

@@ -91,7 +91,7 @@ void shootPion(int nEvents = -1, Bool_t enableGUI=false) {
 
   // tree module
   dRichTree *outTree = new dRichTree("dRichTree","dRichTree.root");
-  outTree->Verbosity(11);
+  outTree->Verbosity(11); // (0=silence, 11=full verbosity)
   f4a->registerSubsystem(outTree);
 
   // output manager
