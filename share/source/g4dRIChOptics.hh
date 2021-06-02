@@ -16,7 +16,7 @@
 #include "G4tgbVolumeMgr.hh"
 
 /*
- * dRICh optics definition classes
+ * Service Classes
  */
 
 //
@@ -252,7 +252,7 @@ public:
 	aa = airFraction(refn, refwl);
 	nn = aa * riAir(wl) + (1. - aa)*riQuartz(wl);
 	break;
-      case 1:     // --- Sellmeier, 1 pole from  (CLAS12/RICH EPJ A (2016) 52: 23)
+      case 1:     // --- Sellmeier, 1 pole from (CLAS12/RICH EPJ A (2016) 52: 23)
 	ri = 1.0494; // 400 nm
 	rho = 0.230; // g/cm3
 	a0 = 0.09683;
@@ -279,8 +279,8 @@ public:
 
       scaledE[i] = ee;
       scaledN[i] = nn;
-      scaledA[i] = aeroA[i] * rho/density; // approx. larger the density, smaller the abs. length
-      scaledS[i] = aeroS[i] * rho/density; // approx. larger the density, smaller the abs. length
+      scaledA[i] = aeroA[i] * (rho*g/cm3)/density; // approx. larger the density, smaller the abs. length
+      scaledS[i] = aeroS[i] * (rho*g/cm3)/density; // approx. larger the density, smaller the abs. length
 
     }
 
