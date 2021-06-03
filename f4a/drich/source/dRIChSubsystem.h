@@ -5,27 +5,27 @@
 
 class PHCompositeNode;
 class PHG4Detector;
-class dRichDetector;
+class dRIChDetector;
 class PHG4SteppingAction;
 
 /**
    * \brief Detector Subsystem module
    *
-   * The detector is constructed and registered via dRichDetector
+   * The detector is constructed and registered via dRIChDetector
    *
    *
-   * \see dRichDetector
-   * \see dRichSubsystem
+   * \see dRIChDetector
+   * \see dRIChSubsystem
    *
    */
-class dRichSubsystem : public PHG4DetectorSubsystem
+class dRIChSubsystem : public PHG4DetectorSubsystem
 {
  public:
   //! constructor
-  dRichSubsystem(const std::string& name = "dRich");
+  dRIChSubsystem(const std::string& name = "dRICh");
 
   //! destructor
-  virtual ~dRichSubsystem() {}
+  virtual ~dRIChSubsystem() {}
 
   /*!
   creates relevant hit nodes that will be populated by the stepping action and stored in the output DST
@@ -53,7 +53,7 @@ class dRichSubsystem : public PHG4DetectorSubsystem
  private:
   //! detector construction
   /*! derives from PHG4Detector */
-  dRichDetector  *m_Detector;
+  dRIChDetector  *m_Detector;
 
   //! particle tracking "stepping" action
   /*! derives from PHG4SteppingActions */

@@ -4,14 +4,14 @@
 // you use for your detector in the SetDefaultParameters() method here
 // The place to do this is marked by //implement your own here//
 // The parameters have no units, they need to be converted in the
-// dRichDetector::ConstructMe() method
+// dRIChDetector::ConstructMe() method
 // but the convention is as mentioned cm and deg
 //____________________________________________________________________________..
 //
-#include "dRichSubsystem.h"
+#include "dRIChSubsystem.h"
 
-#include "dRichDetector.h"
-#include "dRichSteppingAction.h"
+#include "dRIChDetector.h"
+#include "dRIChSteppingAction.h"
 
 #include <phparameter/PHParameters.h>
 
@@ -28,7 +28,7 @@
 using namespace std;
 
 //_______________________________________________________________________
-dRichSubsystem::dRichSubsystem(const std::string &name)
+dRIChSubsystem::dRIChSubsystem(const std::string &name)
   : PHG4DetectorSubsystem(name)
   , m_Detector(nullptr)
   , m_SteppingAction(nullptr)
@@ -38,7 +38,7 @@ dRichSubsystem::dRichSubsystem(const std::string &name)
   InitializeParameters();
 }
 //_______________________________________________________________________
-int dRichSubsystem::InitRunSubsystem(PHCompositeNode *topNode)
+int dRIChSubsystem::InitRunSubsystem(PHCompositeNode *topNode)
 {
   PHNodeIterator iter(topNode);
   PHCompositeNode *dstNode = dynamic_cast<PHCompositeNode *>(iter.findFirst("PHCompositeNode", "DST"));
@@ -60,17 +60,17 @@ int dRichSubsystem::InitRunSubsystem(PHCompositeNode *topNode)
     }
   }
   // create detector
-  m_Detector = new dRichDetector(this, topNode, GetParams(), Name());
+  m_Detector = new dRIChDetector(this, topNode, GetParams(), Name());
   m_Detector->OverlapCheck(CheckOverlap());
   // create stepping action if detector is active
   if (GetParams()->get_int_param("active"))
   {
-    m_SteppingAction = new dRichSteppingAction(m_Detector, GetParams());
+    m_SteppingAction = new dRIChSteppingAction(m_Detector, GetParams());
   }
   return 0;
 }
 //_______________________________________________________________________
-int dRichSubsystem::process_event(PHCompositeNode *topNode)
+int dRIChSubsystem::process_event(PHCompositeNode *topNode)
 {
   // pass top node to stepping action so that it gets
   // relevant nodes needed internally
@@ -81,7 +81,7 @@ int dRichSubsystem::process_event(PHCompositeNode *topNode)
   return 0;
 }
 //_______________________________________________________________________
-void dRichSubsystem::Print(const string &what) const
+void dRIChSubsystem::Print(const string &what) const
 {
   if (m_Detector)
   {
@@ -91,13 +91,13 @@ void dRichSubsystem::Print(const string &what) const
 }
 
 //_______________________________________________________________________
-PHG4Detector *dRichSubsystem::GetDetector(void) const
+PHG4Detector *dRIChSubsystem::GetDetector(void) const
 {
   return m_Detector;
 }
 
 //_______________________________________________________________________
-void dRichSubsystem::SetDefaultParameters()
+void dRIChSubsystem::SetDefaultParameters()
 {
   // sizes are in cm
   // angles are in deg

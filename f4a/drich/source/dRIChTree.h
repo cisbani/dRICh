@@ -1,5 +1,5 @@
 //-----------------------------------------------
-// dRich event tree module
+// dRICh event tree module
 //-----------------------------------------------
 
 #ifndef DRICHTREE_H
@@ -18,15 +18,15 @@ class TTree;
 //class TH1; //---
 //class TH2; //---
 
-class dRichTree : public SubsysReco
+class dRIChTree : public SubsysReco
 {
   public:
     // constructor
-    dRichTree(const std::string &name = "dRichTree",
-              const std::string &fname = "dRichTree.root");
+    dRIChTree(const std::string &name = "dRIChTree",
+              const std::string &fname = "dRIChTree.root");
 
     // destructor
-    virtual ~dRichTree();
+    virtual ~dRIChTree();
 
     // SubsysReco processing methods:
     int Init(PHCompositeNode *);
@@ -38,7 +38,7 @@ class dRichTree : public SubsysReco
 
     std::string m_outfileN; // output file name
     TFile *m_outfile; // output file
-    TTree *m_tree; // the dRich tree
+    TTree *m_tree; // the dRICh tree
 
     //TH1 *m_histo; //---
     // Fun4AllHistoManager *m_hm; // histogram manager //---

@@ -3,23 +3,23 @@
 
 #include <g4main/PHG4SteppingAction.h>
 
-class dRichDetector;
+class dRIChDetector;
 
 class G4Step;
 class G4VPhysicalVolume;
 class PHCompositeNode;
-class dRichHit;
+class dRIChHit;
 class PHG4HitContainer;
 class PHParameters;
 
-class dRichSteppingAction : public PHG4SteppingAction
+class dRIChSteppingAction : public PHG4SteppingAction
 {
   public:
     //! constructor
-    dRichSteppingAction(dRichDetector*, const PHParameters* parameters);
+    dRIChSteppingAction(dRIChDetector*, const PHParameters* parameters);
 
     //! destructor
-    virtual ~dRichSteppingAction();
+    virtual ~dRIChSteppingAction();
 
     //! stepping action
     virtual bool UserSteppingAction(const G4Step*, bool);
@@ -30,11 +30,11 @@ class dRichSteppingAction : public PHG4SteppingAction
   private:
 
     //! pointer to the detector
-    dRichDetector * m_Detector;
+    dRIChDetector * m_Detector;
     const PHParameters * m_Params;
     //! pointer to hit container
     PHG4HitContainer * m_HitContainer;
-    dRichHit * m_Hit;
+    dRIChHit * m_Hit;
     PHG4HitContainer * m_SaveHitContainer;
     G4VPhysicalVolume * m_SaveVolPre;
     G4VPhysicalVolume * m_SaveVolPost;

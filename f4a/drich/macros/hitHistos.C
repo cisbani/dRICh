@@ -1,4 +1,4 @@
-// draw some histograms for testing dRichTree output
+// draw some histograms for testing dRIChTree output
 
 // global pointers
 TCanvas *canv;
@@ -23,14 +23,14 @@ void drawHisto( TString canvN
 };
 
 // main function -----------------------------------
-void hitHistos(TString infileN="dRichTree.root") {
+void hitHistos(TString infileN="dRIChTree.root") {
 
   // read tree
   infile = new TFile(infileN,"READ");
   tr = (TTree*) infile->Get("tree");
 
   // define output file
-  outfile = new TFile("dRichHists.root","RECREATE");
+  outfile = new TFile("dRIChHists.root","RECREATE");
 
   // HISTOGRAMS ////////////////////////////
   drawHisto(

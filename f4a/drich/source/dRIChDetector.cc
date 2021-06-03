@@ -1,4 +1,4 @@
-#include "dRichDetector.h"
+#include "dRIChDetector.h"
 #include <g4dRIChOptics.hh>
 #include <ci_DRICH_Config.hh>
 
@@ -27,7 +27,7 @@ using std::cerr;
 using std::endl;
 
 // ---------------------------------------------------
-dRichDetector::dRichDetector(
+dRIChDetector::dRIChDetector(
   PHG4Subsystem *subsys,
   PHCompositeNode *Node,
   PHParameters *parameters,
@@ -36,7 +36,7 @@ dRichDetector::dRichDetector(
 {}
 
 // ---------------------------------------------------
-int dRichDetector::IsInDetector(
+int dRIChDetector::IsInDetector(
   G4VPhysicalVolume *volume
 ) const {
   std::set<G4VPhysicalVolume *>::const_iterator iter =
@@ -48,7 +48,7 @@ int dRichDetector::IsInDetector(
 }
 
 // ---------------------------------------------------
-void dRichDetector::ConstructMe(G4LogicalVolume *logicWorld) {
+void dRIChDetector::ConstructMe(G4LogicalVolume *logicWorld) {
 
   // get env vars
   char *drichHome = std::getenv("DRICH_HOME");
@@ -65,7 +65,7 @@ void dRichDetector::ConstructMe(G4LogicalVolume *logicWorld) {
   // - check existence
   std::ifstream mf(cfg.model_file.data());
   if(!mf.is_open()) {
-    cerr << "[+] ERROR in dRichDetector: cannot find MODEL TEXT FILE" << endl;
+    cerr << "[+] ERROR in dRIChDetector: cannot find MODEL TEXT FILE" << endl;
     return;
   };
   mf.close();
@@ -129,7 +129,7 @@ void dRichDetector::ConstructMe(G4LogicalVolume *logicWorld) {
 // - use the "activation filter" to decide for which volumes to save hits
 // - the petal number is added to `m_PetalMap`, which together
 //   with the copy number, provides a unique ID for each photo sensor
-void dRichDetector::ActivateVolumeTree(G4VPhysicalVolume *volu, G4int petal) {
+void dRIChDetector::ActivateVolumeTree(G4VPhysicalVolume *volu, G4int petal) {
 
   // get objects
   G4String voluName = volu->GetName();
@@ -165,11 +165,11 @@ void dRichDetector::ActivateVolumeTree(G4VPhysicalVolume *volu, G4int petal) {
 
 // ---------------------------------------------------
 // get petal number
-int dRichDetector::GetPetal(G4VPhysicalVolume *volu) {
+int dRIChDetector::GetPetal(G4VPhysicalVolume *volu) {
   int petalNum;
   try { petalNum = m_PetalMap.at(volu); }
   catch(const std::out_of_range &ex) {
-    cerr << "ERROR in dRichDetector: cannot find petal associated with volume" << endl;
+    cerr << "ERROR in dRIChDetector: cannot find petal associated with volume" << endl;
     return -1;
   };
   return petalNum;
@@ -178,16 +178,16 @@ int dRichDetector::GetPetal(G4VPhysicalVolume *volu) {
 
 // ---------------------------------------------------
 // get PSST number
-int dRichDetector::GetPSST(G4VPhysicalVolume *volu) {
+int dRIChDetector::GetPSST(G4VPhysicalVolume *volu) {
   return volu->GetName().contains("psst") ?
     volu->GetCopyNo() : 0;
 };
 
 
 // ---------------------------------------------------
-void dRichDetector::Print(const string &what) const
+void dRIChDetector::Print(const string &what) const
 {
-  cout << "dRich Detector:" << endl;
+  cout << "dRICh Detector:" << endl;
   if (what == "ALL" || what == "VOLUME")
   {
     cout << "Version 0.1" << endl;

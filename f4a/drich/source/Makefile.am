@@ -15,20 +15,20 @@ AM_LDFLAGS = \
   -L$(OFFLINE_MAIN)/lib64
 
 pkginclude_HEADERS = \
-  dRichSubsystem.h\
-	dRichTree.h
+  dRIChSubsystem.h\
+	dRIChTree.h
 
 lib_LTLIBRARIES = \
-  libdRich.la
+  libdRICh.la
 
-libdRich_la_SOURCES = \
-  dRichSubsystem.cc\
-  dRichDetector.cc\
-	dRichHit.cc\
-  dRichSteppingAction.cc\
-	dRichTree.cc
+libdRICh_la_SOURCES = \
+  dRIChSubsystem.cc\
+  dRIChDetector.cc\
+	dRIChHit.cc\
+  dRIChSteppingAction.cc\
+	dRIChTree.cc
 
-libdRich_la_LIBADD = \
+libdRICh_la_LIBADD = \
   -lphool \
   -lSubsysReco\
   -lg4detectors\
@@ -40,7 +40,7 @@ noinst_PROGRAMS = \
   testexternals
 
 testexternals_SOURCES = testexternals.cc
-testexternals_LDADD   = libdRich.la
+testexternals_LDADD   = libdRICh.la
 
 testexternals.cc:
 	echo "//*** this is a generated file. Do not commit, do not edit" > $@

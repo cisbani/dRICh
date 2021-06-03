@@ -14,14 +14,14 @@ class PHCompositeNode;
 class PHG4Subsystem;
 class PHParameters;
 
-class dRichDetector : public PHG4Detector
+class dRIChDetector : public PHG4Detector
 {
   public:
     //! constructor
-    dRichDetector(PHG4Subsystem *subsys, PHCompositeNode *Node, PHParameters *parameters, const std::string &dnam);
+    dRIChDetector(PHG4Subsystem *subsys, PHCompositeNode *Node, PHParameters *parameters, const std::string &dnam);
 
     //! destructor
-    virtual ~dRichDetector() {}
+    virtual ~dRIChDetector() {}
 
     //! construct
     void ConstructMe(G4LogicalVolume *world) override;

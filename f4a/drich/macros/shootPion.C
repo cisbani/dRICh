@@ -4,15 +4,15 @@
 // load libs
 R__LOAD_LIBRARY(libfun4all.so)
 R__LOAD_LIBRARY(libg4detectors.so)
-R__LOAD_LIBRARY(libdRich.so)
+R__LOAD_LIBRARY(libdRICh.so)
 R__LOAD_LIBRARY(libg4histos.so)
 
 // in fun4all singularity container, these include directives
 // are with respect to $ROOT_INCLUDE_PATH
 
 // - $DRICH_HOME/f4a/install/include
-#include <drich/dRichSubsystem.h>
-#include <drich/dRichTree.h>
+#include <drich/dRIChSubsystem.h>
+#include <drich/dRIChTree.h>
 
 // - $OFFLINE_MAIN/include
 #include <g4detectors/PHG4DetectorSubsystem.h>
@@ -74,7 +74,7 @@ void shootPion(int nEvents = -1, Bool_t enableGUI=false) {
   g4->set_field(0);
   g4->save_DST_geometry(false); // disable this, if not tracking
   // - dRICh module
-  dRichSubsystem *drichSubsys = new dRichSubsystem("dRich");
+  dRIChSubsystem *drichSubsys = new dRIChSubsystem("dRICh");
   drichSubsys->SetActive();
   g4->registerSubsystem(drichSubsys);
   // - register geant4 module
@@ -82,7 +82,7 @@ void shootPion(int nEvents = -1, Bool_t enableGUI=false) {
 
   // hits module
   G4HitNtuple *hits = new G4HitNtuple("Hits");
-  hits->AddNode("dRich_0", 0); /* NOTE:
+  hits->AddNode("dRICh_0", 0); /* NOTE:
       * node name must match the
       * subsystem name, appended with "_detectorID"; the
       * second argument of AddNode is the detector ID
@@ -90,14 +90,14 @@ void shootPion(int nEvents = -1, Bool_t enableGUI=false) {
   f4a->registerSubsystem(hits);
 
   // tree module
-  dRichTree *outTree = new dRichTree("dRichTree","dRichTree.root");
+  dRIChTree *outTree = new dRIChTree("dRIChTree","dRIChTree.root");
   outTree->Verbosity(11); // (0=silence, 11=full verbosity)
   f4a->registerSubsystem(outTree);
 
   // output manager
   /*
   Fun4AllDstOutputManager *outMgr = 
-    new Fun4AllDstOutputManager("DSTOUT","dRichHits.root");
+    new Fun4AllDstOutputManager("DSTOUT","dRIChHits.root");
   outMgr->Verbosity(10);
   f4a->registerOutputManager(outMgr);
   */

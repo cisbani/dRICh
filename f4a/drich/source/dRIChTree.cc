@@ -1,4 +1,4 @@
-#include "dRichTree.h"
+#include "dRIChTree.h"
 
 // TODO: may not need things commented with `---`
 
@@ -18,7 +18,7 @@
 //#include <g4main/PHG4TruthInfoContainer.h> //---
 
 // drich
-#include "dRichHit.h"
+#include "dRIChHit.h"
 
 // root
 #include <TFile.h>
@@ -41,7 +41,7 @@ using std::endl;
 
 
 //-------------------------------------
-dRichTree::dRichTree(const std::string &name,
+dRIChTree::dRIChTree(const std::string &name,
                      const std::string &filename)
   : SubsysReco(name)
   , m_outfileN(filename)
@@ -54,15 +54,15 @@ dRichTree::dRichTree(const std::string &name,
 
 
 //-------------------------------------
-dRichTree::~dRichTree() {
+dRIChTree::~dRIChTree() {
   delete m_tree;
   //delete m_hm; //---
 };
 
 
 //-------------------------------------
-int dRichTree::Init(PHCompositeNode *topNode) {
-  if(Verbosity()>5) cout << "CALL dRichTree::Init" << endl;
+int dRIChTree::Init(PHCompositeNode *topNode) {
+  if(Verbosity()>5) cout << "CALL dRIChTree::Init" << endl;
 
   m_outfile = new TFile(m_outfileN.c_str(),"RECREATE");
 
@@ -71,9 +71,9 @@ int dRichTree::Init(PHCompositeNode *topNode) {
 
 
 //-------------------------------------
-int dRichTree::process_event(PHCompositeNode *topNode) {
+int dRIChTree::process_event(PHCompositeNode *topNode) {
   if(Verbosity()>5)
-    cout << "CALL dRichTree::process_event" << endl;
+    cout << "CALL dRIChTree::process_event" << endl;
 
   getHits(topNode);
 
@@ -82,8 +82,8 @@ int dRichTree::process_event(PHCompositeNode *topNode) {
 
 
 //-------------------------------------
-int dRichTree::End(PHCompositeNode *topNode) {
-  if(Verbosity()>1) cout << "CALL dRichTree::End" << endl;
+int dRIChTree::End(PHCompositeNode *topNode) {
+  if(Verbosity()>1) cout << "CALL dRIChTree::End" << endl;
 
   m_outfile->cd();
   m_tree->Write();
@@ -91,19 +91,19 @@ int dRichTree::End(PHCompositeNode *topNode) {
   m_outfile->Close();
 
   delete m_outfile;
-  if(Verbosity()>1) cout << "DONE dRichTree::End" << endl;
+  if(Verbosity()>1) cout << "DONE dRIChTree::End" << endl;
   return 0;
 };
 
 
 
 //----------------------------------------------
-void dRichTree::getHits(PHCompositeNode *topNode) {
+void dRIChTree::getHits(PHCompositeNode *topNode) {
 
   // get hits container
   PHG4HitContainer *hitCont =
     findNode::getClass<PHG4HitContainer>(
-      topNode, "G4HIT_dRich_0"
+      topNode, "G4HIT_dRICh_0"
     ); // TODO: do not hard code name
 
   if(!hitCont) {
@@ -118,7 +118,7 @@ void dRichTree::getHits(PHCompositeNode *topNode) {
   for(auto hitIter = hitRange.first;
       hitIter != hitRange.second;
       hitIter++) {
-    dRichHit *hit = dynamic_cast<dRichHit*>(hitIter->second);
+    dRIChHit *hit = dynamic_cast<dRIChHit*>(hitIter->second);
 
     if(Verbosity()>5) {
       cout << "----- HIT PRINTOUT:" << endl;
@@ -147,7 +147,7 @@ void dRichTree::getHits(PHCompositeNode *topNode) {
 
 
 //---------------------------------------------
-void dRichTree::vectorToArray(
+void dRIChTree::vectorToArray(
   G4ThreeVector vec, Double_t *arr) {
   arr[0] = (Double_t) vec.x();
   arr[1] = (Double_t) vec.y();
@@ -155,7 +155,7 @@ void dRichTree::vectorToArray(
 };
 
 //---------------------------------------------
-void dRichTree::initTrees() {
+void dRIChTree::initTrees() {
   m_tree = new TTree("tree","tree");
   m_tree->Branch("evnum",&evnum,"evnum/I");
   m_tree->Branch("trackID",&trackID,"trackID/I");
@@ -178,7 +178,7 @@ void dRichTree::initTrees() {
 //----------------------------------------
 /*
 // TODO: may not need this...
-void dRichTree::resetVars() {
+void dRIChTree::resetVars() {
   evnum = 0;
   trackID = -999;
   for(int c=0; c<3; c++) photHitPos[c]=-999;

@@ -1,6 +1,6 @@
-#include "dRichSteppingAction.h"
-#include "dRichDetector.h"
-#include "dRichHit.h"
+#include "dRIChSteppingAction.h"
+#include "dRIChDetector.h"
+#include "dRIChHit.h"
 
 #include <phparameter/PHParameters.h>
 
@@ -46,7 +46,7 @@ using std::cerr;
 using std::endl;
 
 //____________________________________________________________________________..
-dRichSteppingAction::dRichSteppingAction(dRichDetector *detector, const PHParameters *parameters)
+dRIChSteppingAction::dRIChSteppingAction(dRIChDetector *detector, const PHParameters *parameters)
   : PHG4SteppingAction(detector->GetName())
   , m_Detector(detector)
   , m_Params(parameters)
@@ -66,7 +66,7 @@ dRichSteppingAction::dRichSteppingAction(dRichDetector *detector, const PHParame
 }
 
 //____________________________________________________________________________..
-dRichSteppingAction::~dRichSteppingAction()
+dRIChSteppingAction::~dRIChSteppingAction()
 {
   // if the last hit was a zero energy deposit hit, it is
   // just reset and the memory is still allocated, so we
@@ -78,11 +78,11 @@ dRichSteppingAction::~dRichSteppingAction()
 
 //____________________________________________________________________________..
 // This is the implementation of the G4 UserSteppingAction
-bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
+bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
 {
 
   if(verbose)
-     cout << "[>>>>>] call dRichSteppingAction::UserSteppingAction" << endl;
+     cout << "[>>>>>] call dRIChSteppingAction::UserSteppingAction" << endl;
 
   // get touchables, points, volumes
   G4TouchableHandle preTouch = aStep->GetPreStepPoint()->GetTouchableHandle();
@@ -199,7 +199,7 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
       if(isIncident) {
         m_Hit = nullptr; // kill any leftover hit
         if(verbose) cout << "[++++] NEW hit (incident)" << endl;
-        m_Hit = new dRichHit();
+        m_Hit = new dRIChHit();
         // set some entrance attributes, and track ID
         m_Hit->set_position(0, prePoint->GetPosition() / cm);
         m_Hit->set_t(0, prePoint->GetGlobalTime() / nanosecond);
@@ -226,7 +226,7 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
       // create new track
       if(!m_Hit) {
         if(verbose) cout << "[++++] NEW hit" << endl;
-        m_Hit = new dRichHit();
+        m_Hit = new dRIChHit();
       }
 
       // print info
@@ -426,7 +426,7 @@ bool dRichSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
 }
 
 //____________________________________________________________________________..
-void dRichSteppingAction::SetInterfacePointers(PHCompositeNode *topNode)
+void dRIChSteppingAction::SetInterfacePointers(PHCompositeNode *topNode)
 {
   string hitnodename = "G4HIT_" + m_Detector->GetName();
   // now look for the map and grab a pointer to it.
@@ -434,7 +434,7 @@ void dRichSteppingAction::SetInterfacePointers(PHCompositeNode *topNode)
   // if we do not find the node we need to make it.
   if (!m_HitContainer)
   {
-    cout << "dRichSteppingAction::SetTopNode - unable to find "
+    cout << "dRIChSteppingAction::SetTopNode - unable to find "
       << hitnodename << endl;
   }
 }
