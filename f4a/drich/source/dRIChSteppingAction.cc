@@ -61,7 +61,7 @@ dRIChSteppingAction::dRIChSteppingAction(dRIChDetector *detector, const PHParame
   , m_ActiveFlag(m_Params->get_int_param("active"))
   , m_EdepSum(0)
   , m_EionSum(0)
-  , verbose(true)
+  , verbose(m_Params->get_int_param("verbosity")>0)
 {
 }
 

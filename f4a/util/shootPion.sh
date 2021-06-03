@@ -7,7 +7,7 @@ fi
 # call macros
 macroDir=$DRICH_F4A/drich/macros
 pushd $macroDir
-root -l shootPion.C'(100,0)'
+root -l shootPion.C'(100,0,1)' # nEvents, enableGUI, verbose
 root -b -q hitHistos.C
 popd
 

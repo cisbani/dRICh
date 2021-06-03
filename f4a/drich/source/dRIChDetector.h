@@ -52,6 +52,7 @@ class dRIChDetector : public PHG4Detector
     std::map<G4VPhysicalVolume*,G4int> m_PetalMap;
 
     std::string m_SuperDetector;
+    bool verbose;
 };
 
 #endif // DRICHDETECTOR_H

@@ -34,7 +34,7 @@ R__LOAD_LIBRARY(libg4histos.so)
 #include <Geant4/G4SystemOfUnits.hh>
 
 
-void shootPion(int nEvents = -1, Bool_t enableGUI=false) {
+void shootPion(int nEvents = -1, Bool_t enableGUI=false, Bool_t verbose=false) {
 
   // start server
   Fun4AllServer * f4a = Fun4AllServer::instance();
@@ -75,6 +75,7 @@ void shootPion(int nEvents = -1, Bool_t enableGUI=false) {
   g4->save_DST_geometry(false); // disable this, if not tracking
   // - dRICh module
   dRIChSubsystem *drichSubsys = new dRIChSubsystem("dRICh");
+  drichSubsys ->set_int_param("verbosity", verbose ? 1 : 0);
   drichSubsys->SetActive();
   g4->registerSubsystem(drichSubsys);
   // - register geant4 module
@@ -91,7 +92,7 @@ void shootPion(int nEvents = -1, Bool_t enableGUI=false) {
 
   // tree module
   dRIChTree *outTree = new dRIChTree("dRIChTree","dRIChTree.root");
-  outTree->Verbosity(11); // (0=silence, 11=full verbosity)
+  outTree->Verbosity(verbose ? 11 : 0); // (0=silence, 11=full verbosity)
   f4a->registerSubsystem(outTree);
 
   // output manager

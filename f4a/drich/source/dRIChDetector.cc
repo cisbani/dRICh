@@ -32,7 +32,9 @@ dRIChDetector::dRIChDetector(
   PHCompositeNode *Node,
   PHParameters *parameters,
   const string &dnam
-) : PHG4Detector(subsys, Node, dnam), m_Params(parameters)
+) : PHG4Detector(subsys, Node, dnam)
+  , m_Params(parameters)
+  , verbose(m_Params->get_int_param("verbosity")>0)
 {}
 
 // ---------------------------------------------------
@@ -145,12 +147,12 @@ void dRIChDetector::ActivateVolumeTree(G4VPhysicalVolume *volu, G4int petal) {
   G4bool activate = voluName.contains("psst") || voluName.contains("vessel");
   activate = true; // override
   if(activate) {
-    ///*
-    cout << "[+] activate " << voluName 
-         << " petal " << petal
-         << " copy " << voluCopyNo
-         << endl;
-         //*/
+    if(verbose) {
+      cout << "[+] activate " << voluName 
+           << " petal " << petal
+           << " copy " << voluCopyNo
+           << endl;
+    };
     m_PhysicalVolumesSet.insert(volu);
     m_PetalMap.insert(std::pair<G4VPhysicalVolume*,G4int>(volu,petal));
   };

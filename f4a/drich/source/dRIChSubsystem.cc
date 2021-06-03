@@ -99,6 +99,7 @@ PHG4Detector *dRIChSubsystem::GetDetector(void) const
 //_______________________________________________________________________
 void dRIChSubsystem::SetDefaultParameters()
 {
+  set_default_int_param("verbosity",0);
   // sizes are in cm
   // angles are in deg
   // units should be converted to G4 units when used
