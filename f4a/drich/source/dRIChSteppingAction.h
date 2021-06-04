@@ -66,11 +66,12 @@ class dRIChSteppingAction : public PHG4SteppingAction
       entSecondary, /* secondary, byproduct of thrown particle */
       entPostStep,  /* incident particle from PostStepDoItVector */
       /* exit hits                        */
-      exNormal,     /* normal exit */
+      exPrimary,    /* primary track exit */
+      exSecondary,  /* secondary track exit (not primary) */
       /* photosensor hits                 */
-      psOptical,   /* opticalphoton hit */
-      psGamma,     /* non-optical photon hit */
-      psOther,     /* non-photon hit */
+      psOptical,    /* opticalphoton hit */
+      psGamma,      /* non-optical photon hit */
+      psOther,      /* non-photon hit */
       /* unknown hit                      */
       subtypeUnknown,
       nHitSubtypes

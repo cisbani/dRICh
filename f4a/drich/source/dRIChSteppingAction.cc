@@ -73,7 +73,8 @@ dRIChSteppingAction::dRIChSteppingAction(dRIChDetector *detector, const PHParame
   hitSubtypeStr[entSecondary] = "secondary";
   hitSubtypeStr[entPostStep] = "postStep";
   // - exits
-  hitSubtypeStr[exNormal] = "normal";
+  hitSubtypeStr[exPrimary] = "primary";
+  hitSubtypeStr[exSecondary] = "secondary";
   // - photosensor hits
   hitSubtypeStr[psOptical] = "optical";
   hitSubtypeStr[psGamma] = "gamma";
@@ -109,7 +110,7 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   G4StepPoint *prePoint = aStep->GetPreStepPoint();
   G4StepPoint *postPoint = aStep->GetPostStepPoint();
 
-  // skip this step, if leaving the world
+  // skip this step, if leaving the world (postVol will be nullptr)
   if(postPoint->GetStepStatus() == fWorldBoundary) {
     if(verbose) cout << "... skip this step (leaving world)" << endl;
     if(m_Hit) m_Hit->Reset();
@@ -121,19 +122,6 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   G4String postPointVolName = postPoint->GetPhysicalVolume()->GetName();
   G4String preTouchVolName = preVol->GetName();
   G4String postTouchVolName = postVol->GetName();
-
-
-  // SANITY CHECK // TODO remove later, if not important
-  // (sending errors to stdout for now, so we can more easily grep for them)
-  if( prePointVolName != preTouchVolName
-   || postPointVolName != postTouchVolName ) {
-    cout << "ERROR: SANITY CHECK FAILED"
-         << ":   " << prePointVolName
-         << " vs " << preTouchVolName
-         << ";   " << postPointVolName
-         << " vs " << postTouchVolName
-         << endl;
-  };
 
 
   // get track
@@ -167,7 +155,7 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   else if( prePointVolName.contains("World")
        &&  postPointVolName.contains("DRICHvessel")) hitType = hEntrance;
   else if( prePointVolName.contains("DRICHvessel")
-       &&  postPointVolName.contains("World")) hitType = hIgnore; // TODO: next thing to implement
+       &&  postPointVolName.contains("World")) hitType = hExit;
   else hitType = hIgnore;
 
   if(verbose && hitType==hEntrance)
@@ -362,9 +350,15 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
     m_EionSum += eion;
   }
 
-  // get petal number // TODO: make this work for hEntrance too,
-                      // maybe use postVol if hitType==hEntrance
-  int petal = hitType==hEntrance ? 0 : m_Detector->GetPetal(preVol);
+  // get petal number // TODO: does not work for entrance/exit hits
+                      // since they are identified by world<->vessel 
+                      // crossings; the vessel has no petal number;
+                      // note that there is currently a gap between
+                      // the vessel and the petal volumes, which may
+                      // be unrealistic
+  int petal = hitType==hEntrance ?
+    m_Detector->GetPetal(postVol) :
+    m_Detector->GetPetal(preVol);
 
   // save the hit ---------------------------------------------
   // if any of these conditions is true, this is the last step in
@@ -390,12 +384,13 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
       switch(hitType) {
         case hEntrance:
           if(hitSubtype != entPostStep) {
-            if(aTrack->GetTrackID() > 1) hitSubtype = entSecondary;
-            else hitSubtype = entPrimary;
+            if(aTrack->GetTrackID() == 1) hitSubtype = entPrimary;
+            else hitSubtype = entSecondary;
           };
           break;
         case hExit:
-          hitSubtype = exNormal;
+          if(aTrack->GetTrackID() == 1) hitSubtype = exPrimary;
+          else hitSubtype = exSecondary;
           break;
         case hPSST:
           if(particleName=="opticalphoton") hitSubtype = psOptical;

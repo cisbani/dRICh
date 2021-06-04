@@ -33,73 +33,71 @@ void hitHistos(TString infileN="dRIChTree.root") {
   // define output file
   outfile = new TFile("dRIChHists.root","RECREATE");
 
+
+  // useful variables
+  TString hitTypeList = "entrance,psst,exit"; // list of hitTypes
+  TString hitType;
+
+
   // HISTOGRAMS ////////////////////////////
+
   // process vs particle
   drawHisto(
       "process_vs_particleName",
       "process:particleName",
       "",
-      "colz",
+      "colztext",
       0,0,1
       );
-  // general hits
+
+  // hit types
   drawHisto(
       "hitType_vs_particleName",
       "hitType:particleName",
       "",
-      "colz",
+      "colztext",
       0,0,1
       );
   drawHisto(
       "hitType_vs_process",
       "hitType:process",
       "",
-      "colz",
+      "colztext",
       0,0,1
       );
   drawHisto(
-      "hitType_vs_hitSubtype", /*sanity check*/
+      "hitType_vs_hitSubtype",
       "hitType:hitSubtype",
       "",
-      "colz",
+      "colztext",
       0,0,1
       );
-  // entrance hit subtypes
-  drawHisto(
-      "entranceSubtype_vs_particleName",
-      "hitSubtype:particleName",
-      "hitType==\"entrance\"",
-      "colz",
-      0,0,1
-      );
-  drawHisto(
-      "entranceSubtype_vs_process",
-      "hitSubtype:process",
-      "hitType==\"entrance\"",
-      "colz",
-      0,0,1
-      );
-  // photosensor hit subtypes
-  drawHisto(
-      "psstSubtype_vs_particleName",
-      "hitSubtype:particleName",
-      "hitType==\"psst\"",
-      "colz",
-      0,0,1
-      );
-  drawHisto(
-      "psstSubtype_vs_process",
-      "hitSubtype:process",
-      "hitType==\"psst\"",
-      "colz",
-      0,0,1
-      );
+
+  // hit subtypes
+  Ssiz_t tf;
+  while(hitTypeList.Tokenize(hitType,tf,",")) { // loop over hitTypes
+    drawHisto(
+        hitType+"Subtype_vs_particleName",
+        "hitSubtype:particleName",
+        "hitType==\""+hitType+"\"",
+        "colztext",
+        0,0,1
+        );
+    drawHisto(
+        hitType+"Subtype_vs_process",
+        "hitSubtype:process",
+        "hitType==\""+hitType+"\"",
+        "colztext",
+        0,0,1
+        );
+  };
+
   // photosensor hits for DAQ
   drawHisto(
       "psst_hitPos",
       "photHitPos[1]:photHitPos[0]>>psst_hitPos(500,-200,200,500,-200,200)",
       "hitType==\"psst\" && process==\"Cerenkov\"",
-      "colz",
+      "colztext",
       0,0,1
       );
   // time series
