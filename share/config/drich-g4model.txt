@@ -139,11 +139,11 @@
 
 // aerogel
 :VOLU $aerName CONS $aerogelInRadius $aerogelOutRadius $aerogelInRadius $aerogelOutRadius $aerogelThickness/2. $petalPhiStart $petalPhiDelta $aerMatName
-:COLOR $aerName 0.6 0.6 0.6 0.4
+:COLOR $aerName 0.0 1.0 1.0 0.4
 
 // filter
 :VOLU $filterName CONS $aerogelInRadius $aerogelOutRadius $aerogelInRadius $aerogelOutRadius $acrylicFilterThickness/2. $petalPhiStart $petalPhiDelta $filterMatName
-:COLOR $filterName 0.5 0.7 0.5 0.5
+:COLOR $filterName 0.0 1.0 0.0 0.5
 
 // spherical mirror
 :VOLU $mirrorName SPHERE $mirrorInRadius $mirrorRadius $petalPhiStart $petalPhiDelta $mirrorTheta0 $mirrorThetaSpan $mirrorMatName
