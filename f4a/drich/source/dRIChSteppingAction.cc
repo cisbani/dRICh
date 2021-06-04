@@ -117,22 +117,25 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
          << ", whichactive=" << whichactive
          << endl;
 
-  // check if this particle is incident on the vessel
-  bool isIncident = preVol->GetName().contains("World")
-                && postVol->GetName().contains("DRICHvessel");
-  if(verbose && isIncident)
-    cout << "[__] step is INCIDENT on vessel" << endl;
+  // check if this step is an entrance or an exit
+  bool isEntrance = preVol->GetName().contains("World")
+                 && postVol->GetName().contains("DRICHvessel");
+  bool isExit =  preVol->GetName().contains("DRICHvessel")
+                 && postVol->GetName().contains("World"); // TODO
+  if(verbose && isEntrance)
+    cout << "[__] step is ENTERING vessel" << endl;
 
-  // define some booleans for classification
-  bool thrownInc = true; // if false, particle is incident on vessel,
-                         // but perhaps not thrown directly from event
-                         // generator (e.g., secondary)
-  bool postStepInc = false; // if true, incident particle defined from
-                            // PostStepDoItVector step
+  // classifiers for entrance hits
+  enum entranceClass {
+    entPrimary,   /* primary, thrown from generator */
+    entSecondary, /* secondary, byproduct of thrown particle */
+    entPostStep   /* incident particle from PostStepDoItVector */
+  };
+  int entClass = entPrimary;
 
-  // skip this step, if it's outside the detector and not incident
-  // on the vessel
-  if(!whichactive && !isIncident) {
+  // skip this step, if it's outside the detector, and not an entrance
+  // or exit of the vessel
+  if(!whichactive && !isEntrance) {
     if(verbose) cout << "... skip this step" << endl;
     return false;
   };
@@ -140,7 +143,7 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   // get step energy // TODO: do we need `eion`?
   G4double edep = 0;
   G4double eion = 0;
-  if(!isIncident) {
+  if(!isEntrance) {
     edep = aStep->GetTotalEnergyDeposit() / GeV;
     eion = (aStep->GetTotalEnergyDeposit() - aStep->GetNonIonizingEnergyDeposit()) / GeV;
   };
@@ -169,7 +172,7 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
         if(verbose) cout << "[__] first step in a new volume" << endl;
       } else {
         if(verbose) cout << "[ + ] step was defined by PostStepDoItVector" << endl;
-        if(!isIncident) {
+        if(!isEntrance) {
           // this is an impossible G4 Step print out diagnostic to help debug, not sure if
           // this is still with us
           cerr << "ERROR: impossible G4 Step" << endl;
@@ -189,16 +192,15 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
           cout << " previous phys pre vol: " << m_SaveVolPre->GetName()
             << " previous phys post vol: " << m_SaveVolPost->GetName() << endl;
         } else {
-          thrownInc = false; // incident particle step from PostStepDoItVector
-          postStepInc = true;
+          entClass = entPostStep;
         }
       }
 
       // if this step is incident on the vessel, and we have not yet created a
       // hit, create one
-      if(isIncident) {
+      if(isEntrance) {
         m_Hit = nullptr; // kill any leftover hit
-        if(verbose) cout << "[++++] NEW hit (incident)" << endl;
+        if(verbose) cout << "[++++] NEW hit (entrance)" << endl;
         m_Hit = new dRIChHit();
         // set some entrance attributes, and track ID
         m_Hit->set_position(0, prePoint->GetPosition() / cm);
@@ -214,10 +216,10 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
     case fUndefined:
     default:
 
-      // do nothing if not geometry boundary, not undefined, and not incident
+      // do nothing if not geometry boundary, not undefined, and not entrance
       if(  ! prePoint->GetStepStatus()==fGeomBoundary
         && ! prePoint->GetStepStatus()==fUndefined
-        && ! isIncident
+        && ! isEntrance
       ) {
         if(verbose) cout << "[+] prepoint status ignored" << endl;
         break;
@@ -246,8 +248,8 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
         cout << endl;
       };
       
-      // check if incident particle is secondary
-      if(aTrack->GetTrackID()>1 && isIncident) thrownInc = false;
+      // check if entrance particle is secondary
+      if(aTrack->GetTrackID()>1 && isEntrance) entClass = entSecondary;
 
       // set some entrance attributes, and track ID
       m_Hit->set_position(0, prePoint->GetPosition() / cm);
@@ -323,12 +325,20 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
 
 
   // save the hit ---------------------------------------------
-  // if any of these conditions is true, this is the last step in
-  // this volume and we consider saving the hit
-  enum hitTypes {hIncident,hIncidentAtypical,hPSST,hIgnore};
+  
+  // hit classifiers
+  enum hitTypes {
+    hEntrance,         /* vessel entrance, primary */
+    hEntranceAtypical, /* vessel entrance, not primary */
+    hPSST,             /* photosensor hit */
+    hIgnore            /* ignored hit */
+  };
   int hitType;
   G4String hitTypeStr;
-  int petal = isIncident ? 0 : m_Detector->GetPetal(preVol);
+
+  // if any of these conditions is true, this is the last step in
+  // this volume and we consider saving the hit
+  int petal = isEntrance ? 0 : m_Detector->GetPetal(preVol);
   if(postPoint->GetStepStatus() == fGeomBoundary /*left volume*/
   || postPoint->GetStepStatus() == fWorldBoundary /*left world*/
   || postPoint->GetStepStatus() == fAtRestDoItProc /*track stops*/
@@ -345,14 +355,14 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
     // classify hit type
     if(  preName.contains("DRICHpetal")
       && postName.contains("DRICHpsst")) hitType = hPSST;
-    else if(isIncident)
-      hitType = thrownInc ? hIncident : hIncidentAtypical;
+    else if(isEntrance)
+      hitType = entClass==entPrimary ? hEntrance : hEntranceAtypical;
     else hitType = hIgnore;
     // set string
     switch(hitType) {
-      case hPSST: hitTypeStr = "psst"; break;
-      case hIncident: hitTypeStr = "incident"; break;
-      case hIncidentAtypical: hitTypeStr = "incidentAtypical"; break;
+      case hPSST:             hitTypeStr = "psst"; break;
+      case hEntrance:         hitTypeStr = "entrance"; break;
+      case hEntranceAtypical: hitTypeStr = "entranceAtypical"; break;
       default: hitTypeStr = "UNKNOWN";
     }
 
@@ -371,12 +381,12 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
       m_Hit->set_particle_name(aTrack->GetParticleDefinition()->GetParticleName());
       switch(hitType) {
         case hPSST:
-        case hIncidentAtypical:
-          if(postStepInc) m_Hit->set_process("postStepDoItVector");
+        case hEntranceAtypical:
+          if(entClass==entPostStep) m_Hit->set_process("postStepDoItVector");
           else m_Hit->set_process(aTrack->GetCreatorProcess()->GetProcessName());
           break;
-        case hIncident:
-          m_Hit->set_process("incident");
+        case hEntrance:
+          m_Hit->set_process("primary");
           break;
       };
       m_Hit->set_parent_id(aTrack->GetParentID());

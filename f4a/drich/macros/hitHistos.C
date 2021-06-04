@@ -18,6 +18,7 @@ void drawHisto( TString canvN
 ) {
   canv = new TCanvas(canvN,canvN);
   canv->SetLogx(logx); canv->SetLogy(logy); canv->SetLogz(logz);
+  canv->SetGrid(1,1);
   tr->Draw(vars,cuts,style);
   canv->Write();
 };
@@ -43,6 +44,13 @@ void hitHistos(TString infileN="dRIChTree.root") {
   drawHisto(
       "hitType_vs_process",
       "hitType:process",
+      "",
+      "colz",
+      0,0,1
+      );
+  drawHisto(
+      "process_vs_particleName",
+      "process:particleName",
       "",
       "colz",
       0,0,1

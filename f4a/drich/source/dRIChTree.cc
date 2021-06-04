@@ -62,7 +62,7 @@ dRIChTree::~dRIChTree() {
 
 //-------------------------------------
 int dRIChTree::Init(PHCompositeNode *topNode) {
-  if(Verbosity()>5) cout << "CALL dRIChTree::Init" << endl;
+  if(Verbosity()>5) cout << endl << "CALL dRIChTree::Init" << endl;
 
   m_outfile = new TFile(m_outfileN.c_str(),"RECREATE");
 
@@ -73,7 +73,9 @@ int dRIChTree::Init(PHCompositeNode *topNode) {
 //-------------------------------------
 int dRIChTree::process_event(PHCompositeNode *topNode) {
   if(Verbosity()>5)
-    cout << "CALL dRIChTree::process_event" << endl;
+    cout << endl << "CALL dRIChTree::process_event"
+         << " ===================="
+         << endl;
 
   getHits(topNode);
 
@@ -83,7 +85,7 @@ int dRIChTree::process_event(PHCompositeNode *topNode) {
 
 //-------------------------------------
 int dRIChTree::End(PHCompositeNode *topNode) {
-  if(Verbosity()>1) cout << "CALL dRIChTree::End" << endl;
+  if(Verbosity()>1) cout << endl << "CALL dRIChTree::End" << endl;
 
   m_outfile->cd();
   m_tree->Write();
@@ -112,6 +114,7 @@ void dRIChTree::getHits(PHCompositeNode *topNode) {
   };
   
   evnum++;
+  if(evnum%100==0) cout << ">" << evnum << " events processed" << endl;
 
   // loop over hits, filling tree
   auto hitRange = hitCont->getHits();
