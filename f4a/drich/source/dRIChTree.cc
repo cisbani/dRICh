@@ -130,6 +130,7 @@ void dRIChTree::getHits(PHCompositeNode *topNode) {
 
     trackID = (Int_t) hit->get_trkid();
     strcpy(hitType,hit->get_hit_type_name());
+    strcpy(hitSubtype,hit->get_hit_subtype_name());
     petal = (Int_t) hit->get_petal();
     psst = (Int_t) hit->get_psst();
     pdg = (Int_t) hit->get_pdg();
@@ -162,7 +163,8 @@ void dRIChTree::initTrees() {
   m_tree = new TTree("tree","tree");
   m_tree->Branch("evnum",&evnum,"evnum/I");
   m_tree->Branch("trackID",&trackID,"trackID/I");
-  m_tree->Branch("hitType",&hitType,"hitType/C");
+  m_tree->Branch("hitType",hitType,"hitType/C");
+  m_tree->Branch("hitSubtype",hitSubtype,"hitSubtype/C");
   m_tree->Branch("petal",&petal,"petal/I");
   m_tree->Branch("psst",&psst,"psst/I");
   m_tree->Branch("pdg",&pdg,"pdg/I");

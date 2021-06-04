@@ -34,6 +34,15 @@ void hitHistos(TString infileN="dRIChTree.root") {
   outfile = new TFile("dRIChHists.root","RECREATE");
 
   // HISTOGRAMS ////////////////////////////
+  // process vs particle
+  drawHisto(
+      "process_vs_particleName",
+      "process:particleName",
+      "",
+      "colz",
+      0,0,1
+      );
+  // general hits
   drawHisto(
       "hitType_vs_particleName",
       "hitType:particleName",
@@ -49,19 +58,49 @@ void hitHistos(TString infileN="dRIChTree.root") {
       0,0,1
       );
   drawHisto(
-      "process_vs_particleName",
-      "process:particleName",
+      "hitType_vs_hitSubtype", /*sanity check*/
+      "hitType:hitSubtype",
       "",
       "colz",
       0,0,1
       );
-  // photosensor hits
+  // entrance hit subtypes
+  drawHisto(
+      "entranceSubtype_vs_particleName",
+      "hitSubtype:particleName",
+      "hitType==\"entrance\"",
+      "colz",
+      0,0,1
+      );
+  drawHisto(
+      "entranceSubtype_vs_process",
+      "hitSubtype:process",
+      "hitType==\"entrance\"",
+      "colz",
+      0,0,1
+      );
+  // photosensor hit subtypes
+  drawHisto(
+      "psstSubtype_vs_particleName",
+      "hitSubtype:particleName",
+      "hitType==\"psst\"",
+      "colz",
+      0,0,1
+      );
+  drawHisto(
+      "psstSubtype_vs_process",
+      "hitSubtype:process",
+      "hitType==\"psst\"",
+      "colz",
+      0,0,1
+      );
+  // photosensor hits for DAQ
   drawHisto(
       "psst_hitPos",
       "photHitPos[1]:photHitPos[0]>>psst_hitPos(500,-200,200,500,-200,200)",
       "hitType==\"psst\" && process==\"Cerenkov\"",
       "colz",
-      0,0,0
+      0,0,1
       );
   // time series
   drawHisto(

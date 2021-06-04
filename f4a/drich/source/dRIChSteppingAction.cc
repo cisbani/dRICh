@@ -22,7 +22,6 @@
 #include <G4Step.hh>
 #include <G4StepPoint.hh> 
 #include <G4StepStatus.hh>
-#include <G4String.hh> 
 #include <G4SystemOfUnits.hh>
 #include <G4ThreeVector.hh>
 #include <G4TouchableHandle.hh>
@@ -63,6 +62,24 @@ dRIChSteppingAction::dRIChSteppingAction(dRIChDetector *detector, const PHParame
   , m_EionSum(0)
   , verbose(m_Params->get_int_param("verbosity")>0)
 {
+  // hit type strings
+  hitTypeStr[hEntrance] = "entrance";
+  hitTypeStr[hExit] = "exit";
+  hitTypeStr[hPSST] = "psst";
+  hitTypeStr[hIgnore] = "ignore";
+  // hit subtype strings
+  // - entrances
+  hitSubtypeStr[entPrimary] = "primary";
+  hitSubtypeStr[entSecondary] = "secondary";
+  hitSubtypeStr[entPostStep] = "postStep";
+  // - exits
+  hitSubtypeStr[exNormal] = "normal";
+  // - photosensor hits
+  hitSubtypeStr[psOptical] = "optical";
+  hitSubtypeStr[psGamma] = "gamma";
+  hitSubtypeStr[psOther] = "other";
+  // - unknown
+  hitSubtypeStr[subtypeUnknown] = "unknown";
 }
 
 //____________________________________________________________________________..
@@ -99,11 +116,32 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
     return false;
   };
 
+  // get volume names
+  G4String prePointVolName = prePoint->GetPhysicalVolume()->GetName();
+  G4String postPointVolName = postPoint->GetPhysicalVolume()->GetName();
+  G4String preTouchVolName = preVol->GetName();
+  G4String postTouchVolName = postVol->GetName();
+
+
+  // SANITY CHECK // TODO remove later, if not important
+  // (sending errors to stdout for now, so we can more easily grep for them)
+  if( prePointVolName != preTouchVolName
+   || postPointVolName != postTouchVolName ) {
+    cout << "ERROR: SANITY CHECK FAILED"
+         << ":   " << prePointVolName
+         << " vs " << preTouchVolName
+         << ";   " << postPointVolName
+         << " vs " << postTouchVolName
+         << endl;
+  };
+
+
   // get track
   const G4Track *aTrack = aStep->GetTrack();
+  G4String particleName = aTrack->GetParticleDefinition()->GetParticleName();
   if(verbose)
     cout << "[-] track ID=" << aTrack->GetTrackID()
-         << ", particle=" << aTrack->GetParticleDefinition()->GetParticleName()
+         << ", particle=" << particleName
          << endl;
 
   // IsInDetector(preVol) returns
@@ -112,30 +150,34 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   //  < 0 for hits in passive material
   int whichactive = m_Detector->IsInDetector(preVol);
   if(verbose)
-    cout << "[_] step preVol=" << preVol->GetName()
-         << ", postVol=" << postVol->GetName()
+    cout << "[_] step preVol=" << preTouchVolName
+         << ", postVol=" << postTouchVolName
          << ", whichactive=" << whichactive
          << endl;
 
-  // check if this step is an entrance or an exit
-  bool isEntrance = preVol->GetName().contains("World")
-                 && postVol->GetName().contains("DRICHvessel");
-  bool isExit =  preVol->GetName().contains("DRICHvessel")
-                 && postVol->GetName().contains("World"); // TODO
-  if(verbose && isEntrance)
+  
+  // reset hit classifiers
+  hitType = -1;
+  hitSubtype = -1;
+
+
+  // classify hit type
+  if(      prePointVolName.contains("DRICHpetal")
+       &&  postPointVolName.contains("DRICHpsst")) hitType = hPSST;
+  else if( prePointVolName.contains("World")
+       &&  postPointVolName.contains("DRICHvessel")) hitType = hEntrance;
+  else if( prePointVolName.contains("DRICHvessel")
+       &&  postPointVolName.contains("World")) hitType = hIgnore; // TODO: next thing to implement
+  else hitType = hIgnore;
+
+  if(verbose && hitType==hEntrance)
     cout << "[__] step is ENTERING vessel" << endl;
 
-  // classifiers for entrance hits
-  enum entranceClass {
-    entPrimary,   /* primary, thrown from generator */
-    entSecondary, /* secondary, byproduct of thrown particle */
-    entPostStep   /* incident particle from PostStepDoItVector */
-  };
-  int entClass = entPrimary;
+
 
   // skip this step, if it's outside the detector, and not an entrance
   // or exit of the vessel
-  if(!whichactive && !isEntrance) {
+  if(!whichactive && hitType!=hEntrance && hitType!=hExit) {
     if(verbose) cout << "... skip this step" << endl;
     return false;
   };
@@ -143,7 +185,7 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   // get step energy // TODO: do we need `eion`?
   G4double edep = 0;
   G4double eion = 0;
-  if(!isEntrance) {
+  if(hitType!=hEntrance) {
     edep = aStep->GetTotalEnergyDeposit() / GeV;
     eion = (aStep->GetTotalEnergyDeposit() - aStep->GetNonIonizingEnergyDeposit()) / GeV;
   };
@@ -172,7 +214,7 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
         if(verbose) cout << "[__] first step in a new volume" << endl;
       } else {
         if(verbose) cout << "[ + ] step was defined by PostStepDoItVector" << endl;
-        if(!isEntrance) {
+        if(hitType!=hEntrance) {
           // this is an impossible G4 Step print out diagnostic to help debug, not sure if
           // this is still with us
           cerr << "ERROR: impossible G4 Step" << endl;
@@ -187,18 +229,18 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
             << PHG4StepStatusDecode::GetStepStatus(m_SavePostStepStatus) << endl;
           cout << "last track: " << m_SaveTrackId
             << ", current trackid: " << aTrack->GetTrackID() << endl;
-          cout << "phys pre vol: " << preVol->GetName()
+          cout << "phys pre vol: " << preTouchVolName
             << " post vol : " << postTouch->GetVolume()->GetName() << endl;
           cout << " previous phys pre vol: " << m_SaveVolPre->GetName()
             << " previous phys post vol: " << m_SaveVolPost->GetName() << endl;
         } else {
-          entClass = entPostStep;
+          hitSubtype = entPostStep;
         }
       }
 
       // if this step is incident on the vessel, and we have not yet created a
       // hit, create one
-      if(isEntrance) {
+      if(hitType==hEntrance) {
         m_Hit = nullptr; // kill any leftover hit
         if(verbose) cout << "[++++] NEW hit (entrance)" << endl;
         m_Hit = new dRIChHit();
@@ -219,7 +261,7 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
       // do nothing if not geometry boundary, not undefined, and not entrance
       if(  ! prePoint->GetStepStatus()==fGeomBoundary
         && ! prePoint->GetStepStatus()==fUndefined
-        && ! isEntrance
+        && hitType!=hEntrance
       ) {
         if(verbose) cout << "[+] prepoint status ignored" << endl;
         break;
@@ -243,13 +285,10 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
                << aTrack->GetCreatorProcess()->GetProcessName();
         } else {
           cout << "[-] primary track, particle="
-               << aTrack->GetParticleDefinition()->GetParticleName();
+               << particleName;
         };
         cout << endl;
       };
-      
-      // check if entrance particle is secondary
-      if(aTrack->GetTrackID()>1 && isEntrance) entClass = entSecondary;
 
       // set some entrance attributes, and track ID
       m_Hit->set_position(0, prePoint->GetPosition() / cm);
@@ -292,7 +331,7 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
       << PHG4StepStatusDecode::GetStepStatus(m_SavePostStepStatus) << endl;
     cout << "last track: " << m_SaveTrackId
       << ", current trackid: " << aTrack->GetTrackID() << endl;
-    cout << "phys pre vol: " << preVol->GetName()
+    cout << "phys pre vol: " << preTouchVolName
       << " post vol : " << postTouch->GetVolume()->GetName() << endl;
     cout << " previous phys pre vol: " << m_SaveVolPre->GetName()
       << " previous phys post vol: " << m_SaveVolPost->GetName() << endl;
@@ -323,71 +362,70 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
     m_EionSum += eion;
   }
 
+  // get petal number // TODO: make this work for hEntrance too,
+                      // maybe use postVol if hitType==hEntrance
+  int petal = hitType==hEntrance ? 0 : m_Detector->GetPetal(preVol);
 
   // save the hit ---------------------------------------------
-  
-  // hit classifiers
-  enum hitTypes {
-    hEntrance,         /* vessel entrance, primary */
-    hEntranceAtypical, /* vessel entrance, not primary */
-    hPSST,             /* photosensor hit */
-    hIgnore            /* ignored hit */
-  };
-  int hitType;
-  G4String hitTypeStr;
-
   // if any of these conditions is true, this is the last step in
   // this volume and we consider saving the hit
-  int petal = isEntrance ? 0 : m_Detector->GetPetal(preVol);
   if(postPoint->GetStepStatus() == fGeomBoundary /*left volume*/
   || postPoint->GetStepStatus() == fWorldBoundary /*left world*/
   || postPoint->GetStepStatus() == fAtRestDoItProc /*track stops*/
   || aTrack->GetTrackStatus() == fStopAndKill /*track ends*/
   ) {
 
-    // get prePoint and postPoint volume names
-    G4String preName = prePoint->GetPhysicalVolume()->GetName();
-    G4String postName = postPoint->GetPhysicalVolume()->GetName();
     if(verbose) 
-      cout << "[---+] last step in the volume (pre=" << preName
-           << ", post=" << postName << ")" << endl;
-
-    // classify hit type
-    if(  preName.contains("DRICHpetal")
-      && postName.contains("DRICHpsst")) hitType = hPSST;
-    else if(isEntrance)
-      hitType = entClass==entPrimary ? hEntrance : hEntranceAtypical;
-    else hitType = hIgnore;
-    // set string
-    switch(hitType) {
-      case hPSST:             hitTypeStr = "psst"; break;
-      case hEntrance:         hitTypeStr = "entrance"; break;
-      case hEntranceAtypical: hitTypeStr = "entranceAtypical"; break;
-      default: hitTypeStr = "UNKNOWN";
-    }
+      cout << "[---+] last step in the volume (pre=" << prePointVolName
+           << ", post=" << postPointVolName << ")" << endl;
 
 
     // hits to keep +++++++++++++++++++++++
     if(hitType != hIgnore) {
 
       if(verbose)
-        cout << "[-+] " << hitTypeStr << " hit, KEEP!" << endl;
+        cout << "[-+] " << hitTypeStr[hitType] << " hit, KEEP!" << endl;
+      
+      // classify hit subtype
+      switch(hitType) {
+        case hEntrance:
+          if(hitSubtype != entPostStep) {
+            if(aTrack->GetTrackID() > 1) hitSubtype = entSecondary;
+            else hitSubtype = entPrimary;
+          };
+          break;
+        case hExit:
+          hitSubtype = exNormal;
+          break;
+        case hPSST:
+          if(particleName=="opticalphoton") hitSubtype = psOptical;
+          else if(particleName=="gamma") hitSubtype = psGamma;
+          else hitSubtype = psOther;
+          break;
+        default:
+          hitSubtype = subtypeUnknown;
+      };
+      if(hitSubtype==-1) hitSubtype = subtypeUnknown;
+
 
       // set hit vars
-      m_Hit->set_hit_type_name(hitTypeStr);
+      m_Hit->set_hit_type_name(hitTypeStr[hitType]);
+      m_Hit->set_hit_subtype_name(hitSubtypeStr[hitSubtype]);
       m_Hit->set_petal(petal);
       m_Hit->set_psst(m_Detector->GetPSST(postVol));
       m_Hit->set_pdg(aTrack->GetParticleDefinition()->GetPDGEncoding());
-      m_Hit->set_particle_name(aTrack->GetParticleDefinition()->GetParticleName());
+      m_Hit->set_particle_name(particleName);
       switch(hitType) {
-        case hPSST:
-        case hEntranceAtypical:
-          if(entClass==entPostStep) m_Hit->set_process("postStepDoItVector");
+        case hEntrance:
+          if(hitSubtype==entPostStep) m_Hit->set_process("postStep");
+          else if(hitSubtype==entPrimary) m_Hit->set_process("primary");
           else m_Hit->set_process(aTrack->GetCreatorProcess()->GetProcessName());
           break;
-        case hEntrance:
-          m_Hit->set_process("primary");
+        case hExit:
+          m_Hit->set_process("exitProcess");
           break;
+        default:
+          m_Hit->set_process(aTrack->GetCreatorProcess()->GetProcessName());
       };
       m_Hit->set_parent_id(aTrack->GetParentID());
       m_Hit->set_position(1, postPoint->GetPosition() / cm);
