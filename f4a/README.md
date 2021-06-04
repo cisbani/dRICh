@@ -1,17 +1,43 @@
 # dRICh Fun4All porting
 
-- if you have the fun4all singularity image, start a new container
-  - you can do this with `util/startFun4all.sh /path/to/fun4all/Singularity`,
-    where the path points to [Fun4all Singularity](https://github.com/eic/Singularity.git);
-    this script will source `eic_setup.sh`
+## Setup and Usage
+- first, make sure you can run `fun4all`
+  - if you have the `fun4all` `singularity` image, start a new container; you
+    can do this with `util/startFun4all.sh /path/to/fun4all/Singularity`, where
+    the path points to [Fun4all Singularity](https://github.com/eic/Singularity.git);
+    this script will automatically source `eic_setup.sh`, once in the container
+  - if your usage of `fun4all` is different, please note that so far this port
+    has been developed using the `singularity` container; if you encounter
+    issues, send an issue on `github`, or a pull request if you manage to fix
+    it
 - build the dRICh by running `util/buildDetector.sh` or `util/buildDetector.sh clean`
+  - building with the `clean` option will delete the build directory before compiling,
+    useful if you want a fresh build
   - libraries and headers will appear in `./install`, if successful
 - set environment variables with `source env.sh`
+  - most scripts in the `util/` directory do this automatically, so this step
+    is not necessary if you use those scripts
   - `echo $LD_LIBRARY_PATH` should include `./install/lib`
-- open a Qt GUI and shoot particle(s) with `util/shootPion.sh`
-- use the command `/Fun4All/run 1` to shoot one particle and visualize
+- the script `util/shootPion.sh` is being used for testing and development
+  - it throws a `pi+` to a specific location on the dRICh
+  - run this script with no arguments for a print out of the usage
+  - this script will call some macros in `./drich/macros`:
+    - `shootPion.C` is responsible for running the simulation
+    - `hitHistos.C` will draw some useful histograms
+      - if you edit `hitHistos.C`, you can use `./util/rerunHitHistos.sh` to
+        quickly rerun this script, without having to rerun the simulation
+  - ROOT files that were produced will appear in `./out`
+    - `dRIChTree.root` contains the output hit `TTree`
+    - `dRIChHists.root` contains histograms
+    - `G4HitNtuple.root` contains the DST tree (not tested)
+  - if you start the GUI, use the command `/Fun4All/run 1` to shoot one
+    particle and visualize
 
-## changelog for shared code, or ESCalate implementation
+## Development Notes
+- see [diagram.pdf](doc/diagram.pdf) for a schematic of the classes and
+  inheritance for this `fun4all` dRICh implementation
+
+### changelog for shared code, or ESCalate implementation
 This is a summary of changes needed in code outside this
 directory, in order to allow the `fun4all` implementation to
 build and run and not complain. Hopefully they won't
