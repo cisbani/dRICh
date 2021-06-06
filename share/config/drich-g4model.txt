@@ -57,7 +57,7 @@
 :P petalPhiDelta  56.
 
 :P aerogelThickness 4.*cm
-:P aerogelInRadius $vesselInRadius
+:P aerogelInRadius $vesselInRadius+$vesselWallThickness
 :P aerogelOutRadius 120.*cm
 
 :P aerogelDensity 0.1
@@ -80,7 +80,7 @@
 // Main Derived parameters
 // ------------------
 
-:P aerogelZ0 -$vesselLengthZ/2.+$aerogelThickness/2.
+:P aerogelZ0 -$vesselLengthZ/2.+$vesselWindowThickness+$aerogelThickness/2.
 :P acrylicFilterZ0 $aerogelZ0+$aerogelThickness/2.+$acrylicFilterThickness/2.
 
 :P airFractionInAerogel (2.32-$aerogelDensity)/(2.32-0.00120479)
