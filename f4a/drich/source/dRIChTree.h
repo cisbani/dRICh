@@ -64,12 +64,12 @@ class dRIChTree : public SubsysReco
     char particleName[128];
     char process[256];
     Int_t parentID;
-    Double_t photHitPos[3]; // [xyz]
-    Double_t photP[3];
-    Double_t photPdir[3];
-    Double_t photVtxPos[3];
-    Double_t photVtxPdir[3];
-    Double_t photDeltaT;
+    Double_t hitPos[3]; // [xyz]
+    Double_t hitP[3];
+    Double_t hitPdir[3];
+    Double_t hitVtxPos[3];
+    Double_t hitVtxPdir[3];
+    Double_t deltaT;
 
 };
 

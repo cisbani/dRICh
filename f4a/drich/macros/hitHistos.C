@@ -35,8 +35,8 @@ void hitHistos(TString infileN="dRIChTree.root") {
 
 
   // useful variables
-  TString hitTypeList = "entrance,psst,exit"; // list of hitTypes
-  TString hitType;
+  const Int_t nHitTypes = 3;
+  TString hitTypeList[nHitTypes] = {"entrance","psst","exit"};
 
 
   // HISTOGRAMS ////////////////////////////
@@ -74,32 +74,75 @@ void hitHistos(TString infileN="dRIChTree.root") {
       );
 
   // hit subtypes
-  Ssiz_t tf;
-  while(hitTypeList.Tokenize(hitType,tf,",")) { // loop over hitTypes
+  for(int h=0; h<nHitTypes; h++) { // loop over hitTypes
     drawHisto(
-        hitType+"Subtype_vs_particleName",
+        hitTypeList[h]+"Subtype_vs_particleName",
         "hitSubtype:particleName",
-        "hitType==\""+hitType+"\"",
+        "hitType==\""+hitTypeList[h]+"\"",
         "colztext",
         0,0,1
         );
     drawHisto(
-        hitType+"Subtype_vs_process",
+        hitTypeList[h]+"Subtype_vs_process",
         "hitSubtype:process",
-        "hitType==\""+hitType+"\"",
+        "hitType==\""+hitTypeList[h]+"\"",
         "colztext",
         0,0,1
         );
   };
 
-  // photosensor hits for DAQ
+  // hit positions
+  // - cherenkov hits, what we will see in the DAQ (but with binning finer than
+  //   the photosensors)
   drawHisto(
-      "psst_hitPos",
-      "photHitPos[1]:photHitPos[0]>>psst_hitPos(500,-200,200,500,-200,200)",
-      "hitType==\"psst\" && process==\"Cerenkov\"",
-      "colztext",
+      "optical_hitPos2D",
+      "hitPos[1]:hitPos[0]>>optical_hitPos2D(500,-200,200,500,-200,200)",
+      "hitType==\"psst\" && hitSubtype==\"optical\"",
+      "colz",
       0,0,1
       );
+  drawHisto(
+      "optical_hitPos3D",
+      "hitPos[0]:hitPos[2]:hitPos[1]",
+      "hitType==\"psst\" && hitSubtype==\"optical\"",
+      "",
+      0,0,0
+      );
+  // - hit postions for each hitType, for validation of hitType classification
+  for(int h=0; h<nHitTypes; h++) { // loop over hitTypes
+    drawHisto(
+        hitTypeList[h]+"_hitPos2D",
+        "hitPos[1]:hitPos[0]>>"+hitTypeList[h]+"_hitPos2D(500,-200,200,500,-200,200)",
+        "hitType==\""+hitTypeList[h]+"\"",
+        "colz",
+        0,0,1
+        );
+    drawHisto(
+        hitTypeList[h]+"_hitPos3D",
+        "hitPos[0]:hitPos[2]:hitPos[1]",
+        "hitType==\""+hitTypeList[h]+"\"",
+        "",
+        0,0,0
+        );
+  };
+  // - vertex postions for each hitType, for validation of hitType classification
+  for(int h=0; h<nHitTypes; h++) { // loop over hitTypes
+    drawHisto(
+        hitTypeList[h]+"_hitVtxPos2D",
+        "hitVtxPos[1]:hitVtxPos[0]>>"+hitTypeList[h]+"_hitVtxPos2D(500,-200,200,500,-200,200)",
+        "hitType==\""+hitTypeList[h]+"\"",
+        "colz",
+        0,0,1
+        );
+    drawHisto(
+        hitTypeList[h]+"_hitVtxPos3D",
+        "hitVtxPos[0]:hitVtxPos[2]:hitVtxPos[1]",
+        "hitType==\""+hitTypeList[h]+"\"",
+        "",
+        0,0,0
+        );
+  };
+
   // time series
   drawHisto(
       "timeSeries_particleName",

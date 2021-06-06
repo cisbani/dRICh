@@ -137,12 +137,12 @@ void dRIChTree::getHits(PHCompositeNode *topNode) {
     strcpy(particleName,hit->get_particle_name().c_str());
     strcpy(process,hit->get_process().c_str());
     parentID = (Int_t) hit->get_parent_id();
-    vectorToArray( hit->get_position(1), photHitPos );
-    vectorToArray( hit->get_momentum(), photP );
-    vectorToArray( hit->get_momentum_dir(), photPdir );
-    vectorToArray( hit->get_vertex_position(), photVtxPos );
-    vectorToArray( hit->get_vertex_momentum_dir(), photVtxPdir );
-    photDeltaT = (Double_t) hit->get_delta_t();
+    vectorToArray( hit->get_position(1), hitPos );
+    vectorToArray( hit->get_momentum(), hitP );
+    vectorToArray( hit->get_momentum_dir(), hitPdir );
+    vectorToArray( hit->get_vertex_position(), hitVtxPos );
+    vectorToArray( hit->get_vertex_momentum_dir(), hitVtxPdir );
+    deltaT = (Double_t) hit->get_delta_t();
     m_tree->Fill();
   };
 
@@ -171,12 +171,12 @@ void dRIChTree::initTrees() {
   m_tree->Branch("particleName",particleName,"particleName/C");
   m_tree->Branch("process",process,"process/C");
   m_tree->Branch("parentID",&parentID,"parentID/I");
-  m_tree->Branch("photHitPos",photHitPos,"photHitPos[3]/D");
-  m_tree->Branch("photP",photP,"photP[3]/D");
-  m_tree->Branch("photPdir",photPdir,"photPdir[3]/D");
-  m_tree->Branch("photVtxPos",photVtxPos,"photVtxPos[3]/D");
-  m_tree->Branch("photVtxPdir",photVtxPdir,"photVtxPdir[3]/D");
-  m_tree->Branch("photDeltaT",&photDeltaT,"photDeltaT/D");
+  m_tree->Branch("hitPos",hitPos,"hitPos[3]/D");
+  m_tree->Branch("hitP",hitP,"hitP[3]/D");
+  m_tree->Branch("hitPdir",hitPdir,"hitPdir[3]/D");
+  m_tree->Branch("hitVtxPos",hitVtxPos,"hitVtxPos[3]/D");
+  m_tree->Branch("hitVtxPdir",hitVtxPdir,"hitVtxPdir[3]/D");
+  m_tree->Branch("deltaT",&deltaT,"deltaT/D");
 };
 
 
@@ -186,7 +186,7 @@ void dRIChTree::initTrees() {
 void dRIChTree::resetVars() {
   evnum = 0;
   trackID = -999;
-  for(int c=0; c<3; c++) photHitPos[c]=-999;
-  photDeltaT=-999;
+  for(int c=0; c<3; c++) hitPos[c]=-999;
+  deltaT=-999;
 };
 */
