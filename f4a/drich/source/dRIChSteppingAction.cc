@@ -424,7 +424,7 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
       };
       m_Hit->set_parent_id(aTrack->GetParentID());
       m_Hit->set_position(1, postPoint->GetPosition() / cm);
-      m_Hit->set_momentum(aTrack->GetMomentum() / eV);
+      m_Hit->set_momentum(aTrack->GetMomentum() / GeV);
       m_Hit->set_momentum_dir(aTrack->GetMomentumDirection() /*unitless*/);
       m_Hit->set_vertex_position(aTrack->GetVertexPosition() / cm);
       m_Hit->set_vertex_momentum_dir(aTrack->GetVertexMomentumDirection() /*unitless*/);

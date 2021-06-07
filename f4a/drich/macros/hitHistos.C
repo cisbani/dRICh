@@ -34,7 +34,7 @@ void drawHisto( TString canvN
   Double_t yv = vesselRadius * TMath::Cos(TMath::Pi()/3);
   Double_t xp = pipeRadius * TMath::Sin(TMath::Pi()/3);
   Double_t yp = pipeRadius * TMath::Cos(TMath::Pi()/3);
-  if(canvN.Contains("2D")) {
+  if(canvN.Contains("Pos2D")) {
     TEllipse * circ[2];
     circ[0] = new TEllipse(0,0,vesselRadius,vesselRadius);
     circ[1] = new TEllipse(0,0,pipeRadius,pipeRadius);
@@ -57,7 +57,7 @@ void drawHisto( TString canvN
       line[l]->Draw("SAME");
     };
   }
-  else if(canvN.Contains("3D")) {
+  else if(canvN.Contains("Pos3D")) {
     TPolyLine3D * vcirc[2];
     int ndiv=100;
     Double_t xx,yy;
@@ -182,7 +182,7 @@ void hitHistos(TString infileN="dRIChTree.root") {
       "optical_hitPos3D",
       "hitPos[0]:hitPos[2]:hitPos[1]>>optical_hitPos3D"+binning3D,
       "hitType==\"psst\" && hitSubtype==\"optical\"",
-      "",
+      "box",
       0,0,0
       );
   // - hit postions for each hitType, for validation of hitType classification
@@ -198,7 +198,7 @@ void hitHistos(TString infileN="dRIChTree.root") {
         hitTypeList[h]+"_hitPos3D",
         "hitPos[0]:hitPos[2]:hitPos[1]>>"+hitTypeList[h]+"_hitPos3D"+binning3D,
         "hitType==\""+hitTypeList[h]+"\"",
-        "",
+        "box",
         0,0,0
         );
   };
@@ -215,10 +215,86 @@ void hitHistos(TString infileN="dRIChTree.root") {
         hitTypeList[h]+"_hitVtxPos3D",
         "hitVtxPos[0]:hitVtxPos[2]:hitVtxPos[1]>>"+hitTypeList[h]+"_hitVtxPos3D"+binning3D,
         "hitType==\""+hitTypeList[h]+"\"",
-        "",
+        "box",
         0,0,0
         );
   };
+
+  // - hit momentum
+  drawHisto(
+      "optical_hitMomentum2D",
+      "hitP[1]:hitP[0]",
+      "hitType==\"psst\" && hitSubtype==\"optical\"",
+      "colz",
+      0,0,1
+      );
+  drawHisto(
+      "optical_hitMomentum3D",
+      "hitP[0]:hitP[2]:hitP[1]",
+      "hitType==\"psst\" && hitSubtype==\"optical\"",
+      "box",
+      0,0,0
+      );
+  for(int h=0; h<nHitTypes; h++) { // loop over hitTypes
+    drawHisto(
+        hitTypeList[h]+"_hitMomentum2D",
+        "hitP[1]:hitP[0]",
+        "hitType==\""+hitTypeList[h]+"\"",
+        "colz",
+        0,0,1
+        );
+    drawHisto(
+        hitTypeList[h]+"_hitMomentum3D",
+        "hitP[0]:hitP[2]:hitP[1]",
+        "hitType==\""+hitTypeList[h]+"\"",
+        "box",
+        0,0,0
+        );
+  };
+
+  // - hit momentum direction
+  drawHisto(
+      "optical_hitMomentumDir2D",
+      "hitPdir[1]:hitPdir[0]",
+      "hitType==\"psst\" && hitSubtype==\"optical\"",
+      "colz",
+      0,0,1
+      );
+  drawHisto(
+      "optical_hitMomentumDir3D",
+      "hitPdir[0]:hitPdir[2]:hitPdir[1]",
+      "hitType==\"psst\" && hitSubtype==\"optical\"",
+      "box",
+      0,0,0
+      );
+  for(int h=0; h<nHitTypes; h++) { // loop over hitTypes
+    drawHisto(
+        hitTypeList[h]+"_hitMomentumDir2D",
+        "hitPdir[1]:hitPdir[0]",
+        "hitType==\""+hitTypeList[h]+"\"",
+        "colz",
+        0,0,1
+        );
+    drawHisto(
+        hitTypeList[h]+"_hitMomentumDir3D",
+        "hitPdir[0]:hitPdir[2]:hitPdir[1]",
+        "hitType==\""+hitTypeList[h]+"\"",
+        "box",
+        0,0,0
+        );
+  };
+
+  // delta T
+  for(int h=0; h<nHitTypes; h++) { // loop over hitTypes
+    drawHisto(
+        hitTypeList[h]+"_deltaT",
+        "deltaT>>"+hitTypeList[h]+"_deltaT"+"(5000,0,100)",
+        "hitType==\""+hitTypeList[h]+"\"",
+        "",
+        0,1,0
+        );
+  };
+
 
   // time series
   drawHisto(
