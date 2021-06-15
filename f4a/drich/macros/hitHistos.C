@@ -96,6 +96,9 @@ void drawHisto( TString canvN
   canv->Write();
 };
 
+// other subroutine defs
+void BinLog(TAxis * axis);
+
 // main function -----------------------------------
 void hitHistos(TString infileN="dRIChTree.root") {
 
@@ -295,6 +298,85 @@ void hitHistos(TString infileN="dRIChTree.root") {
         );
   };
 
+  // energy deposition
+  // - edep spectrum for primary exits
+  drawHisto(
+      "edepSpectrum_primary_exit",
+      "edep",
+      "hitType==\"exit\" && hitSubtype==\"primary\"",
+      "",
+      0,1,0
+      );
+
+  // - edep spectrum for optical photons (NB: units converted to eV)
+  TH1D * edepSpectrum_optical_psst = new TH1D(
+    "edepSpectrum_optical_psst_hist","Edep for optical PSST hits (units=eV)",
+    1000,1,1e4);
+  BinLog(edepSpectrum_optical_psst->GetXaxis());
+  tr->Project(
+      "edepSpectrum_optical_psst_hist",
+      "edep*1e9", /* convert GeV -> eV */
+      "hitType==\"psst\" && hitSubtype==\"optical\""
+      );
+  canv = new TCanvas("edepSpectrum_optical_psst","edepSpectrum_optical_psst");
+  canv->SetLogx();
+  canv->SetGrid(1,1);
+  edepSpectrum_optical_psst->Draw();
+  canv->Write();
+
+  // edep vs. subtype,particle,process,momentum for each hitType
+  for(int h=0; h<nHitTypes; h++) { // loop over hitTypes
+    drawHisto(
+        hitTypeList[h]+"_edep_vs_hitSubtype",
+        "edep:hitSubtype",
+        "hitType==\""+hitTypeList[h]+"\"",
+        "colz",
+        0,0,1
+        );
+    drawHisto(
+        hitTypeList[h]+"_edep_vs_particleName",
+        "edep:particleName",
+        "hitType==\""+hitTypeList[h]+"\"",
+        "colz",
+        0,0,1
+        );
+    drawHisto(
+        hitTypeList[h]+"_edep_vs_process",
+        "edep:process",
+        "hitType==\""+hitTypeList[h]+"\"",
+        "colz",
+        0,0,1
+        );
+  };
+
+  // - edep vs momentum for primary exits
+  drawHisto(
+      "edepVsP_primary_exit",
+      "edep:TMath::Sqrt(hitP[0]*hitP[0]+hitP[1]*hitP[1]+hitP[2]*hitP[2])",
+      "hitType==\"exit\" && hitSubtype==\"primary\"",
+      "colz",
+      0,0,1
+      );
+
+  // - edep vs momentum for optical photons (NB: units converted to eV)
+  TH2D * edepVsP_optical_psst = new TH2D(
+    "edepVsP_optical_psst_hist","Edep vs. P for optical PSST hits (units=eV)",
+    100,1,1e2,
+    100,1,1e4);
+  BinLog(edepVsP_optical_psst->GetXaxis());
+  BinLog(edepVsP_optical_psst->GetYaxis());
+  tr->Project(
+      "edepVsP_optical_psst_hist",
+      "edep*1e9:TMath::Sqrt(hitP[0]*hitP[0]+hitP[1]*hitP[1]+hitP[2]*hitP[2])*1e9", /* convert GeV -> eV */
+      "hitType==\"psst\" && hitSubtype==\"optical\""
+      );
+  canv = new TCanvas("edepVsP_optical_psst","edepVsP_optical_psst");
+  canv->SetLogx();
+  canv->SetLogy();
+  canv->SetGrid(1,1);
+  edepVsP_optical_psst->Draw("colz");
+  canv->Write();
+
 
   // time series
   drawHisto(
@@ -316,3 +398,23 @@ void hitHistos(TString infileN="dRIChTree.root") {
   outfile->Close();
 };
 
+
+
+// create equal width binning for a logarithmic scale axis
+void BinLog(TAxis * axis) {
+  Float_t lb = axis->GetXmin();
+  Float_t ub = axis->GetXmax();
+  if(lb<=0||ub<=0||lb>=ub) {
+    fprintf(stderr,"ERROR: bad axis range for Tools::BinLog\n");
+    return;
+  };
+  lb = TMath::Log10(lb);
+  ub = TMath::Log10(ub);
+
+  Int_t nbins = axis->GetNbins();
+  Float_t width = (ub-lb)/nbins;
+  Float_t * newBins = new Float_t[nbins+1];
+  for (int b=0; b<=nbins; b++) newBins[b] = TMath::Power(10,lb+b*width);
+  axis->Set(nbins,newBins);
+  delete[] newBins;
+} 

@@ -3,6 +3,8 @@
 
 #include <g4main/PHG4SteppingAction.h>
 #include <G4String.hh> 
+#include <G4StepPoint.hh>
+#include <G4Track.hh>
 
 class dRIChDetector;
 
@@ -29,6 +31,15 @@ class dRIChSteppingAction : public PHG4SteppingAction
     virtual void SetInterfacePointers(PHCompositeNode*);
 
   private:
+
+    //! method to initialize a new hit, resetting some things, such 
+    //  as energy deposition accumulators
+    void InitHit(
+        const G4StepPoint *prePoint_,
+        const G4Track *aTrack_,
+        bool resetAccumulators
+        );
+
 
     //! pointer to the detector
     dRIChDetector * m_Detector;

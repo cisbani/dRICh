@@ -143,6 +143,7 @@ void dRIChTree::getHits(PHCompositeNode *topNode) {
     vectorToArray( hit->get_vertex_position(), hitVtxPos );
     vectorToArray( hit->get_vertex_momentum_dir(), hitVtxPdir );
     deltaT = (Double_t) hit->get_delta_t();
+    edep = (Double_t) hit->get_edep();
     m_tree->Fill();
   };
 
@@ -177,6 +178,7 @@ void dRIChTree::initTrees() {
   m_tree->Branch("hitVtxPos",hitVtxPos,"hitVtxPos[3]/D");
   m_tree->Branch("hitVtxPdir",hitVtxPdir,"hitVtxPdir[3]/D");
   m_tree->Branch("deltaT",&deltaT,"deltaT/D");
+  m_tree->Branch("edep",&edep,"edep/D");
 };
 
 

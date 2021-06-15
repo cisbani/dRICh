@@ -20,12 +20,10 @@
 #include <G4ParticleDefinition.hh> 
 #include <G4ReferenceCountedHandle.hh>
 #include <G4Step.hh>
-#include <G4StepPoint.hh> 
 #include <G4StepStatus.hh>
 #include <G4SystemOfUnits.hh>
 #include <G4ThreeVector.hh>
 #include <G4TouchableHandle.hh>
-#include <G4Track.hh>
 #include <G4VProcess.hh>
 #include <G4TrackStatus.hh>
 #include <G4Types.hh>
@@ -178,7 +176,7 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
     eion = (aStep->GetTotalEnergyDeposit() - aStep->GetNonIonizingEnergyDeposit()) / GeV;
   };
   if(verbose)
-    cout << "[_] step edep=" << edep << ", eion=" << eion << endl;
+    cout << "[_] step edep=" << edep << ",   eion=" << eion << endl;
 
 
   // Here we have to decide if we need to create a new hit.  Normally this should 
@@ -232,12 +230,7 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
         m_Hit = nullptr; // kill any leftover hit
         if(verbose) cout << "[++++] NEW hit (entrance)" << endl;
         m_Hit = new dRIChHit();
-        // set some entrance attributes, and track ID
-        m_Hit->set_position(0, prePoint->GetPosition() / cm);
-        m_Hit->set_t(0, prePoint->GetGlobalTime() / nanosecond);
-        m_Hit->set_trkid(aTrack->GetTrackID());
-        m_SaveTrackId = aTrack->GetTrackID();
-        m_SaveHitContainer = m_HitContainer;
+        this->InitHit(prePoint,aTrack,true);
       }
       break;
 
@@ -255,11 +248,17 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
         break;
       };
 
-      // create new track
+      // create new hit
       if(!m_Hit) {
         if(verbose) cout << "[++++] NEW hit" << endl;
         m_Hit = new dRIChHit();
-      }
+        this->InitHit(prePoint,aTrack,true);
+      } else {
+        // if hit already exists, then Reset() has likely just been
+        // called; in this case, initialize, but don't reset accumulators
+        this->InitHit(prePoint,aTrack,false);
+      };
+
 
       // print info
       if(verbose) {
@@ -278,19 +277,6 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
         cout << endl;
       };
 
-      // set some entrance attributes, and track ID
-      m_Hit->set_position(0, prePoint->GetPosition() / cm);
-      m_Hit->set_t(0, prePoint->GetGlobalTime() / nanosecond);
-      m_Hit->set_trkid(aTrack->GetTrackID());
-      m_SaveTrackId = aTrack->GetTrackID();
-      m_SaveHitContainer = m_HitContainer;
-
-      // initializate accumulators (e.g., for total energy deposition)
-      m_EdepSum = 0;
-      if(whichactive > 0) {
-        m_EionSum = 0;
-        m_Hit->set_eion(0);
-      }
 
       // tracking of the truth info // TODO: not used yet?
       if(G4VUserTrackInformation *p = aTrack->GetUserInformation()) {
@@ -308,6 +294,7 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   // - some sanity checks for inconsistencies (aka bugs) we have seen over the years
   // - check if this hit was created, if not print out last post step status
   if(!m_Hit || !std::isfinite(m_Hit->get_x(0))) {
+    printf("m_Hit @%p; isfinite=%d\n",(void*)m_Hit,std::isfinite(m_Hit->get_x(0)));
     cout << GetName() << ": hit was not created" << endl;
     cout << "prestep status: "
       << PHG4StepStatusDecode::GetStepStatus(prePoint->GetStepStatus())
@@ -349,6 +336,10 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
   if(whichactive > 0) {
     m_EionSum += eion;
   }
+  if(verbose) 
+    cout << "[_] m_EdepSum=" << m_EdepSum
+         << ",   m_EionSum=" << m_EionSum
+         << endl;
 
   // get petal number // TODO: does not work for entrance/exit hits
                       // since they are identified by world<->vessel 
@@ -441,12 +432,10 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
 
       // total accumulators
       m_Hit->set_edep(m_EdepSum);
-      if(whichactive > 0) {
-        m_Hit->set_eion(m_EionSum);
-      }
+      m_Hit->set_eion(m_EionSum);
       if(verbose)
         cout << "[-+] m_EdepSum=" << m_EdepSum
-             << ", m_EionSum=" << m_EionSum
+             << ",    m_EionSum=" << m_EionSum
              << endl;
            
 
@@ -459,6 +448,7 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
       // do not save this hit ++++++++++++++++++++++++++++
       // - reset hit object for reuse
       // - if last hit overall, memory still allocated
+      // - does not reset local vars, such as m_EdepSum
       if(verbose) cout << "[-+] not keeping this hit" << endl;
       m_Hit->Reset();
     };
@@ -466,6 +456,25 @@ bool dRIChSteppingAction::UserSteppingAction(const G4Step *aStep, bool was_used)
 
   // return true to indicate the hit was used
   return true;
+}
+
+//____________________________________________________________________________..
+void dRIChSteppingAction::InitHit(
+  const G4StepPoint *prePoint_,
+  const G4Track *aTrack_,
+  bool resetAccumulators
+) {
+  // set some entrance attributes, and track ID
+  m_Hit->set_position(0, prePoint_->GetPosition() / cm);
+  m_Hit->set_t(0, prePoint_->GetGlobalTime() / nanosecond);
+  m_Hit->set_trkid(aTrack_->GetTrackID());
+  m_SaveTrackId = aTrack_->GetTrackID();
+  m_SaveHitContainer = m_HitContainer;
+  // initializate accumulators (e.g., for total energy deposition)
+  if(resetAccumulators) {
+    m_EdepSum = 0;
+    m_EionSum = 0;
+  };
 }
 
 //____________________________________________________________________________..

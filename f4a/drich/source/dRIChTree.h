@@ -70,6 +70,7 @@ class dRIChTree : public SubsysReco
     Double_t hitVtxPos[3];
     Double_t hitVtxPdir[3];
     Double_t deltaT;
+    Double_t edep;
 
 };
 

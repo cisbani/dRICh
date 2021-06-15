@@ -26,7 +26,7 @@ class dRIChHit : public PHG4Hit
 
     // accessors
     int get_trkid() const { return trackid; }
-    G4ThreeVector get_position(const int i) const { return hitPos[i]; } // 0=entry, 1=exit
+    G4ThreeVector get_position(const int i) const { return hitPos[i]; } // 0=hit-entry, 1=hit-exit
     float get_x(const int i) const { return hitPos[i].x(); }
     float get_y(const int i) const { return hitPos[i].y(); }
     float get_z(const int i) const { return hitPos[i].z(); }
