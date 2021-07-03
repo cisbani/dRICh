@@ -27,6 +27,7 @@ Run `install.sh` from within this `install` directory
   - if you are low on disk space on `/`, change the temp directory for
     singularity (which defaults to `/tmp`): e.g., 
     `export SINGULARITY_TMPDIR=$HOME/tmp`
+    - you may also need to set `TMPDIR`
   - if you have `/cfmvs` access from your local computer, you may have
     to disable `cvmfs` detection in `install.sh` (change `if [ -d
     /cvmfs/...]` to `if false; then`)
