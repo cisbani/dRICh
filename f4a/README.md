@@ -4,20 +4,20 @@
 - first, make sure you can run `fun4all`
   - if you have the `fun4all` `singularity` image, start a new container; you
     can do this with `util/startFun4all.sh /path/to/fun4all/Singularity`, where
-    the path points to [Fun4all Singularity](https://github.com/eic/Singularity.git);
-    this script will automatically source `eic_setup.sh`, once in the container
+    the path points to [Fun4all Singularity](https://github.com/eic/Singularity.git)
   - if your usage of `fun4all` is different, please note that so far this port
     has been developed using the `singularity` container; if you encounter
     issues, send an issue on `github`, or a pull request if you manage to fix
     it
+- set environment variables with `source env.sh`
+  - most scripts in the `util/` directory do this automatically, so this step
+    is not necessary if you use those scripts
 - build the dRICh by running `util/buildDetector.sh` or `util/buildDetector.sh clean`
   - building with the `clean` option will delete the build directory before compiling,
     useful if you want a fresh build
   - libraries and headers will appear in `./install`, if successful
-- set environment variables with `source env.sh`
-  - most scripts in the `util/` directory do this automatically, so this step
-    is not necessary if you use those scripts
-  - `echo $LD_LIBRARY_PATH` should include `./install/lib`
+- if this was your first time building, you may need to `source env.sh` again; just
+  make sure that `echo $LD_LIBRARY_PATH` includes `./install/lib`
 - the script `util/shootPion.sh` is being used for testing and development
   - it throws a `pi+` to a specific location on the dRICh
   - run this script with no arguments for a print out of the usage
