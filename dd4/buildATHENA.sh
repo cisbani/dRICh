@@ -4,6 +4,7 @@ outdir=${PWD}/out
 mkdir -p $outdir
 
 pushd $DRICH_DD4_ATHENA
+
 cmake -B build -S . \
   -DCMAKE_INSTALL_PREFIX=$ATHENA_PREFIX \
   -DCMAKE_CXX_STANDARD=17 \
