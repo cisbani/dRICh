@@ -12,6 +12,7 @@ Developer's scripts for `dd4hep` port
     directory
 - [https://eic.phy.anl.gov/geoviewer/](https://eic.phy.anl.gov/geoviewer/)
   and open resulting `root` file
+- `checkOverlaps.sh` checks for overlaps
 
 
 # Installation notes for personal computer:

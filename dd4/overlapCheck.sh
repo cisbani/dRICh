@@ -1,3 +1,3 @@
 #!/bin/bash
 # alias for checking for overlaps
-checkOverlaps -c /home/dilks/d/athena/eic/detectors/athena/athena.xml
+checkOverlaps -c ${DRICH_DD4_ATHENA}/athena.xml
