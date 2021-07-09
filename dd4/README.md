@@ -29,6 +29,7 @@ Get container installation script, either from `wget` or `git`:
 Create install directory, and move or symlink `install.sh` there:
 - `mkdir install; cd install`
 - `ln -s ../eic_container/install.sh ./`
+
 Run `install.sh` from within this `install` directory
   - run `install.sh -h` to see if there are options that may be useful
     for you, for example, if you are low on disk space on `/`, consider
