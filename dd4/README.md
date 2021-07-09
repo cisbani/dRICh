@@ -1,6 +1,11 @@
-Developer's scripts for `dd4hep` port
+# DD4HEP Port
 
-# Setup
+This directory contains support scripts for the `dd4hep` port development
+
+The code itself is [integrated in ATHENA](https://eicweb.phy.anl.gov/EIC/detectors/athena/-/tree/master); the latest development may be found on a dedicated dRICh branch (initial development on `33-detailed-dual-rich-implementation`)
+
+
+## Setup
 
 - Obtain the `eic_container` Singularity image (see below) and clone the 
 `EIC/detectors/athena` repository
@@ -15,7 +20,7 @@ Developer's scripts for `dd4hep` port
 - `checkOverlaps.sh` checks for overlaps
 
 
-# Installation notes for personal computer:
+## Installation notes for personal computer
 
 Get container installation script, either from `wget` or `git`:
 - `wget https://eicweb.phy.anl.gov/containers/eic_container/-/raw/master/install.sh`
