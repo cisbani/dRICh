@@ -18,7 +18,7 @@
 # aim at +x dRICh sector
 /gps/position 0 0 0 cm
 #/gps/direction 0.36 0.00 0.93
-/gps/direction 0.2 0.0 0.8
+/gps/direction 0.3 0.0 0.8
 
 #/gps/ang/type iso
 #/gps/ang/mintheta  10 degree
