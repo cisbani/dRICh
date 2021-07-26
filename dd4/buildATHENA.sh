@@ -1,11 +1,19 @@
 #!/bin/bash
 
+if [ $# -ge 1 ]; then clean=1; else clean=0; fi
+
 source environ.sh
 
 outdir=${PWD}/out
 mkdir -p $outdir
 
 pushd $DRICH_DD4_ATHENA
+
+if [ $clean -eq 1 ]; then
+  echo "clean build dir... done"
+  mkdir -p build
+  rm -rv build
+fi
 
 cmake -B build -S . \
   -DCMAKE_INSTALL_PREFIX=$ATHENA_PREFIX \
