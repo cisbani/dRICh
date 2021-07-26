@@ -12,6 +12,8 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
+source environ.sh
+
 xmlfile=${DRICH_DD4_ATHENA}/athena.xml
 wdir=$(pwd)
 
