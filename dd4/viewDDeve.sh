@@ -3,5 +3,5 @@
 source environ.sh
 
 pushd $DRICH_DD4_ATHENA
-ddeve -config athena.xml
+ddeve -config athena_drich.xml
 popd
