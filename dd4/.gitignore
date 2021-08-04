@@ -2,4 +2,5 @@
 *.root
 out/*
 *.log
+macro/tmp.mac
 
