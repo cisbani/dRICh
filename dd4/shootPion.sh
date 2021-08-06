@@ -6,9 +6,11 @@ if [ $# -lt 3 ]; then
   echo "USAGE: $0 [a=athena,d=drichOnly] [r=run,v=vis] [runTest]"
   echo "  run tests:"
   echo "    1: aim pions at center of aerogel sector"
-  echo "    2: edge tests"
-  echo "    3: spray test"
-  echo "    4: scan test"
+  echo "    2: inner edge test"
+  echo "    3: outer edge test"
+  echo "    4: radial scan test"
+  echo "    5: azimuthal+radial scan test"
+  echo "   10: spray test"
   echo ""
   exit 1
 fi
@@ -34,6 +36,7 @@ else echo "ERROR: unknown run type"; exit 1; fi
 echo "runType = $runType"
 
 function sep { printf '%50s\n' | tr ' ' -; }
+function pyc { python -c "import math; print($1)"; }
 sep
 
 
@@ -41,21 +44,23 @@ sep
 source environ.sh
 
 
-# build macro file
+#######################################################
+# build macro file ####################################
 wd=$(pwd)
 macroCommon="${wd}/macro/${runType}_common.mac"
 macroFile="${wd}/macro/tmp.mac"
 
-## common settings
+## common settings ######################
 cat $macroCommon > $macroFile
 
-## particle type and energy
-if [ $runTest -eq 3 ]; then
+## particle type and energy ######################
+if [ $runTest -eq 10 ]; then
   particle="gamma"
   energy="10.0 GeV"
 else
   particle="pi+"
-  energy="10.0 GeV"
+  energy="8.0 GeV" # test gas ring
+  #energy="1.0 GeV" # test aerogel ring
 fi
 cat << EOF >> $macroFile
 /gps/verbose 2
@@ -66,7 +71,7 @@ cat << EOF >> $macroFile
 #/gps/ene/sigma 3.0 GeV
 EOF
 
-## source settings
+## source settings ######################
 cat << EOF >> $macroFile
 #/gps/pos/type Volume
 #/gps/pos/shape Cylinder
@@ -76,7 +81,34 @@ cat << EOF >> $macroFile
 /gps/position 0 0 0 cm
 EOF
 
-## directions and run
+## directions and run ######################
+
+### dimensions of envelope
+z0=155.0 # z-position of entrance window (snout frontplane)
+sl=50.0 # snout length
+z1=$(pyc "$z0+$sl") # z of cylinder frontplane
+r0=10.0 # bore radius at entrance window
+r1=110.0 # snout frontplane radius
+r2=125.0 # snout backplane radius (cylinder entrance window)
+
+### acceptance limits
+# note: rmin and rmax are radial limits, at the snout entrance
+# - rmin limited by bore radius at snout entrance; a buffer
+#   is used to account for thicknesses etc.
+rmin=$r0
+rmin=$(pyc "$rmin + 0.0") # buffer
+# - rmax limited by snout backplane radius at snout backplane,
+#   a value smaller than snout frontplane radius; cherenkov
+#   photons from this angle will reflect off the mirror and
+#   hit the outer edge of the vessel, so we use a buffer
+#   to further decrease rmax to a reasonable range so the 
+#   opticalphotons will reach the sensors
+#     -  5 cm buffer -> start to see aerogel rings
+#     - 20 cm buffer -> start to see gas rings
+rmax=$(pyc "$r2 * $z0 / $z1")
+rmax=$(pyc "$rmax - 20.0") # buffer
+
+### set directions and runs
 if [ $runTest -eq 1 ]; then
 cat << EOF >> $macroFile
 # aim at +x dRICh sector
@@ -85,13 +117,47 @@ cat << EOF >> $macroFile
 EOF
 elif [ $runTest -eq 2 ]; then
 cat << EOF >> $macroFile
-# edge tests
-#/gps/direction 100 0 177 # outer edge of aerogel
-#/run/beamOn $numEvents
-/gps/direction 15 0 177 # inner edge of aerogel
+# inner edge of acceptance
+/gps/direction $rmin 0 $z0
 /run/beamOn $numEvents
 EOF
 elif [ $runTest -eq 3 ]; then
+cat << EOF >> $macroFile
+# outer edge of acceptance
+/gps/direction $rmax 0 $z0
+/run/beamOn $numEvents
+EOF
+elif [ $runTest -eq 4 ]; then
+  numSteps=4 # works best if even
+  step=$(pyc "($rmax-$rmin)/($numSteps-1)")
+  numEvents=1000 #override
+  for x in `seq $rmin $step $rmax`; do
+    cat << EOF >> $macroFile
+# scan test
+/gps/direction $x 0 $z0
+/run/beamOn $numEvents
+EOF
+  done
+elif [ $runTest -eq 5 ]; then
+  # TODO: should have written this whole script in python....
+  numSteps=4 # works best if even
+  step=$(pyc "($rmax-$rmin)/($numSteps-1)")
+  nPhi=42 # works best if this is an odd multiple of 6 (e.g., 18,30,42,54)
+  numEvents=50 #override
+  pi=3.141592
+  for x in `seq $rmin $step $rmax`; do
+    for p in `seq 1 1 $nPhi`; do
+      phi=$(pyc "2*($p-1)*$pi/$nPhi")
+      xrot=$(pyc "$x*math.cos($phi)")
+      yrot=$(pyc "$x*math.sin($phi)")
+      cat << EOF >> $macroFile
+# scan test
+/gps/direction $xrot $yrot $z0
+/run/beamOn $numEvents
+EOF
+    done
+  done
+elif [ $runTest -eq 10 ]; then
 cat << EOF >> $macroFile
 # spray test
 /gps/ang/type iso
@@ -99,21 +165,11 @@ cat << EOF >> $macroFile
 /gps/ang/maxtheta 30 degree
 /run/beamOn $numEvents
 EOF
-elif [ $runTest -eq 4 ]; then
-cat << EOF >> $macroFile
-# scan test
-/gps/direction 100 0 177
-/run/beamOn $numEvents
-/gps/direction 80 0 177 
-/run/beamOn $numEvents
-/gps/direction 60 0 177 
-/run/beamOn $numEvents
-/gps/direction 40 0 177 
-/run/beamOn $numEvents
-/gps/direction 20 0 177
-/run/beamOn $numEvents
-EOF
 fi
+
+# END build macro file ####################################
+###########################################################
+
 
 
 ## print full macro

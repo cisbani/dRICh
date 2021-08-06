@@ -3,13 +3,13 @@
        xs:noNamespaceSchemaLocation="http://www.lcsim.org/schemas/compact/1.0/compact.xsd">
 
        <debug>
-         <type name="surface"       value="1"/>
-         <type name="material"       value="1"/>
-         <type name="readout"       value="1"/>
-         <type name="segmentation"  value="1"/>
-         <type name="limits"        value="1"/>
-         <type name="region"        value="1"/>
-         <type name="includes"      value="1"/>
+         <type name="surface"       value="0"/>
+         <type name="material"      value="0"/>
+         <type name="readout"       value="0"/>
+         <type name="segmentation"  value="0"/>
+         <type name="limits"        value="0"/>
+         <type name="region"        value="0"/>
+         <type name="includes"      value="0"/>
        </debug>
 
   <documentation level="-1">
@@ -57,33 +57,17 @@
   </limits>
 
   <display>
+  <include ref="compact/colors.xml" />
   <include ref="compact/display.xml" />
   </display>
-
-  <documentation level="0">
-    ## Detector Subsystems
-
-    ### IP Subsystems
-
-    The interaction point subsystems are included before the central detector subsystems.
-    This is becuase the IP subsystems, for exmaple the beampipe, will define paramters
-    which are subsquently used in the central detector construction -- e.g. the vertex tracker
-    uses the beampipe OD to help define its placement. 
-
-    The IP subsystems include the Far forward and backward regions. The list of subsystem includes:
-     - Interaction region beampipe 
-     - B0 tracker
-     - Off-momentum tracker
-     - Far forward roman pots
-     - Zero Degree Calorimeter
-     - Beam line magnets.
-     - and more...
-  </documentation>
 
   <detectors>
   </detectors>
 
   <include ref="compact/drich.xml"/>
+
+  <fields>
+  </fields>
 
   <readouts>
   </readouts>

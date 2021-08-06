@@ -1,11 +1,12 @@
 void drawHits(TString infileN="out/sim_run.root") {
+  //gStyle->SetOptStat(0);
   TFile *infile = new TFile(infileN,"READ");
   TTree *tr = (TTree*)infile->Get("events");
   TH2D *hitsHist = new TH2D(
       "hitsHist",
       "dRICh hits;x [cm];y [cm]",
-      500, -300, 300,
-      500, -300, 300
+      1000, -200, 200,
+      1000, -200, 200
       );
   tr->Project(
       "hitsHist",
@@ -15,4 +16,7 @@ void drawHits(TString infileN="out/sim_run.root") {
   canv->SetLogz();
   canv->SetGrid(1,1);
   hitsHist->Draw("colz");
+  //hitsHist->GetXaxis()->SetRangeUser(120,200);
+  //hitsHist->GetYaxis()->SetRangeUser(-40,40);
+  canv->Print("out/hits.png");
 };
