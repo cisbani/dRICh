@@ -96,7 +96,7 @@ r2=125.0 # snout backplane radius (cylinder entrance window)
 # - rmin limited by bore radius at snout entrance; a buffer
 #   is used to account for thicknesses etc.
 rmin=$r0
-rmin=$(pyc "$rmin + 0.0") # buffer
+rmin=$(pyc "$rmin + 1.0") # buffer
 # - rmax limited by snout backplane radius at snout backplane,
 #   a value smaller than snout frontplane radius; cherenkov
 #   photons from this angle will reflect off the mirror and
@@ -130,7 +130,7 @@ EOF
 elif [ $runTest -eq 4 ]; then
   numSteps=4 # works best if even
   step=$(pyc "($rmax-$rmin)/($numSteps-1)")
-  numEvents=1000 #override
+  numEvents=100 #override
   for x in `seq $rmin $step $rmax`; do
     cat << EOF >> $macroFile
 # scan test

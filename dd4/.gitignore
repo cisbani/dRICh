@@ -3,4 +3,5 @@
 out/*
 *.log
 macro/tmp.mac
+*.exe
 
