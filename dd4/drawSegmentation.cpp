@@ -3,11 +3,13 @@
 #include <iostream>
 #include <bitset>
 #include <map>
+#include <vector>
 
 // ROOT
 #include "TSystem.h"
 #include "TCanvas.h"
 #include "TApplication.h"
+#include "TBox.h"
 #include "ROOT/RDataFrame.hxx"
 #include "ROOT/RDFHelpers.hxx" // for RDF::RunGraphs
 
@@ -19,6 +21,18 @@ using namespace ROOT;
 using lvec = VecOps::RVec<Long64_t>;
 
 int main(int argc, char** argv) {
+
+  // settings
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  // number of pixels along sensor side
+  const Int_t numPx = 16;
+
+  // dilations: for re-scaling module positions and segment positions
+  // for drawing; if you change `numPx`, consider tuning these parameters
+  // as well
+  Long64_t dilation = 4;
+
 
   // setup
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -40,12 +54,19 @@ int main(int argc, char** argv) {
   modCoordTr->SetBranchAddress("module",&moduleSens);
   modCoordTr->SetBranchAddress("x",&xSensF);
   modCoordTr->SetBranchAddress("y",&ySensF);
+  std::vector<TBox*> boxList;
   for(Long64_t e=0; e<modCoordTr->GetEntries(); e++) {
     modCoordTr->GetEntry(e);
-    xSens = (Long64_t)(xSensF+0.5);
-    ySens = (Long64_t)(ySensF+0.5);
+    xSens = (Long64_t)(dilation*xSensF+0.5);
+    ySens = (Long64_t)(dilation*ySensF+0.5);
     modCoordMap.insert(std::pair<Long64_t,std::pair<Long64_t,Long64_t>>(
         moduleSens, std::pair<Long64_t,Long64_t>(xSens,ySens)
+	));
+    boxList.push_back(new TBox(
+	xSens,
+	ySens,
+	xSens + numPx,
+	ySens + numPx
 	));
   };
   
@@ -102,9 +123,8 @@ int main(int argc, char** argv) {
   auto modCoordY = [&modCoordLU] (lvec ids) { return modCoordLU(ids,1); };
 
   // convert (module,segment) to pixel histogram position
-  Long64_t dilation = 5;
-  auto pixelCoord = [&dilation] (lvec modXs, lvec segXs) {
-    return dilation*modXs + segXs;
+  auto pixelCoord = [] (lvec modXs, lvec segXs) {
+    return modXs + segXs;
   };
 
 
@@ -117,8 +137,8 @@ int main(int argc, char** argv) {
       .Define("det", detDecode, {"id"})
       .Define("sec", secDecode, {"id"})
       .Define("mod", modDecode, {"id"})
-      .Define("segX",   xDecode, {"id"})
-      .Define("segY",   yDecode, {"id"})
+      .Define("segX", xDecode, {"id"})
+      .Define("segY", yDecode, {"id"})
       ;
 
   // convert modules to histogram positions
@@ -172,7 +192,7 @@ int main(int argc, char** argv) {
   // execution
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  // draw
+  // draw segmentation indicators
   TCanvas * c = new TCanvas();
   c->Divide(3,2);
   for(int pad=1; pad<=6; pad++) c->GetPad(pad)->SetLogy();
@@ -182,13 +202,28 @@ int main(int argc, char** argv) {
   c->cd(4); xHist->Draw();
   c->cd(5); yHist->Draw();
 
-  //c = new TCanvas(); sectorVsXY->Draw("box");
+
+  // draw pixel hits
   c = new TCanvas();
-  //pixelHits->Draw("box");
-  Int_t secBin = pixelHits->GetZaxis()->FindBin(0.0); // limit to sector 0
-  pixelHits->GetZaxis()->SetRange(secBin,secBin);
-  TH2D *pixelHitsSec0 = (TH2D*) pixelHits->Project3D("yx");
-  pixelHitsSec0->Draw("colz");
+  c->Divide(3,2);
+  Int_t secBin;
+  const Int_t nSec = 6;
+  TH2D *pixelHitsSec[nSec];
+  for(int sec=0; sec<6; sec++) {
+    c->cd(sec+1);
+    secBin = pixelHits->GetZaxis()->FindBin((Float_t)sec);
+    pixelHits->GetZaxis()->SetRange(secBin,secBin);
+    pixelHitsSec[sec] = (TH2D*) pixelHits->Project3D("yx");
+    pixelHitsSec[sec]->SetName(Form("pixelHits_s%d",sec));
+    pixelHitsSec[sec]->SetTitle(Form("pixel hits sector %d",sec));
+    pixelHitsSec[sec]->Draw("colz");
+    for(auto box : boxList) {
+      box->SetFillStyle(0);
+      box->Draw("same");
+    };
+    pixelHitsSec[sec]->Draw("colz same");
+  };
+
 
   cout << "\n\npress ^C to exit.\n\n";
   mainApp.Run();

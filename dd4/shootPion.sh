@@ -110,9 +110,10 @@ rmax=$(pyc "$rmax - 20.0") # buffer
 
 ### set directions and runs
 if [ $runTest -eq 1 ]; then
+numEvents=1000 #override
 cat << EOF >> $macroFile
 # aim at +x dRICh sector
-/gps/direction 0.3 0.0 0.8
+/gps/direction 0.25 0.0 0.8
 /run/beamOn $numEvents
 EOF
 elif [ $runTest -eq 2 ]; then
@@ -128,9 +129,9 @@ cat << EOF >> $macroFile
 /run/beamOn $numEvents
 EOF
 elif [ $runTest -eq 4 ]; then
-  numSteps=4 # works best if even
+  numSteps=4 # number of radial steps; works best if even
   step=$(pyc "($rmax-$rmin)/($numSteps-1)")
-  numEvents=100 #override
+  numEvents=1000 #override
   for x in `seq $rmin $step $rmax`; do
     cat << EOF >> $macroFile
 # scan test
@@ -140,9 +141,9 @@ EOF
   done
 elif [ $runTest -eq 5 ]; then
   # TODO: should have written this whole script in python....
-  numSteps=4 # works best if even
+  numSteps=4 # number of radial steps; works best if even
   step=$(pyc "($rmax-$rmin)/($numSteps-1)")
-  nPhi=42 # works best if this is an odd multiple of 6 (e.g., 18,30,42,54)
+  nPhi=30 # works best if this is an odd multiple of 6 (e.g., 18,30,42,54)
   numEvents=50 #override
   pi=3.141592
   for x in `seq $rmin $step $rmax`; do
