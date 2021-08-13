@@ -204,13 +204,13 @@ int main(int argc, char** argv) {
 
 
   // draw pixel hits
-  c = new TCanvas();
-  c->Divide(3,2);
+  Bool_t singleCanvas = false;
+  if(singleCanvas) { c = new TCanvas(); c->Divide(3,2); };
   Int_t secBin;
   const Int_t nSec = 6;
   TH2D *pixelHitsSec[nSec];
   for(int sec=0; sec<6; sec++) {
-    c->cd(sec+1);
+    if(singleCanvas) c->cd(sec+1); else c = new TCanvas();
     secBin = pixelHits->GetZaxis()->FindBin((Float_t)sec);
     pixelHits->GetZaxis()->SetRange(secBin,secBin);
     pixelHitsSec[sec] = (TH2D*) pixelHits->Project3D("yx");

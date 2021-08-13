@@ -10,7 +10,7 @@ if [ $# -lt 3 ]; then
   echo "    3: outer edge test"
   echo "    4: radial scan test"
   echo "    5: azimuthal+radial scan test"
-  echo "   10: spray test"
+  echo "   10: opticalphoton test"
   echo ""
   exit 1
 fi
@@ -55,8 +55,8 @@ cat $macroCommon > $macroFile
 
 ## particle type and energy ######################
 if [ $runTest -eq 10 ]; then
-  particle="gamma"
-  energy="10.0 GeV"
+  particle="opticalphoton"
+  energy="3.0 eV"
 else
   particle="pi+"
   energy="8.0 GeV" # test gas ring
@@ -110,7 +110,6 @@ rmax=$(pyc "$rmax - 20.0") # buffer
 
 ### set directions and runs
 if [ $runTest -eq 1 ]; then
-numEvents=1000 #override
 cat << EOF >> $macroFile
 # aim at +x dRICh sector
 /gps/direction 0.25 0.0 0.8
@@ -159,13 +158,26 @@ EOF
     done
   done
 elif [ $runTest -eq 10 ]; then
-cat << EOF >> $macroFile
-# spray test
+  numSteps=100 # number of radial steps; works best if even
+  step=$(pyc "($rmax-$rmin)/($numSteps-1)")
+  echo "/vis/scene/endOfEventAction accumulate $numSteps" >> $macroFile
+  #echo "/vis/scene/endOfRunAction accumulate" >> $macroFile
+  #for x in `seq $rmin $step $rmax`; do
+    cat << EOF >> $macroFile
+# opticalphoton scan test
+#/gps/direction $x 0 $z0
+/gps/pos/type Point
+#/gps/pos/shape Sphere
+/gps/pos/radius 0.1 mm
 /gps/ang/type iso
-/gps/ang/mintheta 5 degree
-/gps/ang/maxtheta 30 degree
-/run/beamOn $numEvents
+/gps/ang/mintheta 175 deg
+/gps/ang/maxtheta 210 deg
+/gps/ang/minphi 0 deg
+/gps/ang/maxphi 0.01 deg
+/run/beamOn $numSteps
 EOF
+  #done
+  #echo "/vis/viewer/flush" >> $macroFile
 fi
 
 # END build macro file ####################################
