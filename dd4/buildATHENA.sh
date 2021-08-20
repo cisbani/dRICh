@@ -23,8 +23,7 @@ pushd $DRICH_DD4_ATHENA
 if [ "$detector" = "a" ]; then
   compactFile="athena.xml"
 elif [ "$detector" = "d" ]; then
-  compactFile="athena_drich.xml"
-  ln -svf ${wdir}/compact/${compactFile} ./
+  compactFile="compact/subsystem_views/drich_only.xml"
 fi
 echo "compactFile = $compactFile"
 

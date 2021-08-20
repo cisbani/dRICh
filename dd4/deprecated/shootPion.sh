@@ -19,8 +19,10 @@ runcmd=$2
 runTest=$3
 
 # set compact file (full ATHENA or standalone dRICh)
-if [ "$detector" = "a" ]; then compactFile="athena.xml";
-elif [ "$detector" = "d" ]; then compactFile="athena_drich.xml";
+if [ "$detector" = "a" ];
+  then compactFile="athena.xml";
+elif [ "$detector" = "d" ];
+  then compactFile="compact/subsystem_views/drich_only.xml";
 else echo "ERROR: unknown detector"; exit 1; fi
 echo "compactFile = $compactFile"
 
@@ -54,7 +56,7 @@ macroFile="${wd}/macro/tmp.mac"
 cat $macroCommon > $macroFile
 
 ## particle type and energy ######################
-if [ $runTest -eq 10 ]; then
+if [ $runTest -ge 10 ]; then
   particle="opticalphoton"
   energy="3.0 eV"
 else
@@ -158,11 +160,9 @@ EOF
     done
   done
 elif [ $runTest -eq 10 ]; then
-  numSteps=100 # number of radial steps; works best if even
-  step=$(pyc "($rmax-$rmin)/($numSteps-1)")
+  numSteps=200
   echo "/vis/scene/endOfEventAction accumulate $numSteps" >> $macroFile
   #echo "/vis/scene/endOfRunAction accumulate" >> $macroFile
-  #for x in `seq $rmin $step $rmax`; do
     cat << EOF >> $macroFile
 # opticalphoton scan test
 #/gps/direction $x 0 $z0
@@ -170,14 +170,20 @@ elif [ $runTest -eq 10 ]; then
 #/gps/pos/shape Sphere
 /gps/pos/radius 0.1 mm
 /gps/ang/type iso
-/gps/ang/mintheta 175 deg
-/gps/ang/maxtheta 210 deg
-/gps/ang/minphi 0 deg
-/gps/ang/maxphi 0.01 deg
+/gps/ang/mintheta 0 deg
+/gps/ang/maxtheta 180 deg
+/gps/ang/minphi 179.9 deg
+/gps/ang/maxphi 180.0 deg
 /run/beamOn $numSteps
 EOF
   #done
   #echo "/vis/viewer/flush" >> $macroFile
+elif [ $runTest -eq 11 ]; then
+cat << EOF >> $macroFile
+# normal incidence opticalphoton test, for alignment of spheres
+/gps/direction 190.0 0.0 75.0
+/run/beamOn 1
+EOF
 fi
 
 # END build macro file ####################################

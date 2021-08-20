@@ -15,8 +15,9 @@
 #/vis/drawVolume
 #/vis/viewer/set/viewpointThetaPhi 115 65 # angled view
 #/vis/viewer/set/viewpointThetaPhi 0 0 # front view
-/vis/viewer/set/viewpointThetaPhi -90 90 # top view
-#/vis/viewer/zoom 1.1
+/vis/viewer/set/viewpointThetaPhi -90 -89 # top view
+#/vis/viewer/set/viewpointThetaPhi 90 0 # side view
+#/vis/viewer/zoom 0.5
 #/vis/viewer/set/style wireframe
 #/vis/scene/add/axes 0 0 0 1 m
 /vis/scene/add/trajectories rich smooth
