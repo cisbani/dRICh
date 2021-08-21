@@ -2,7 +2,7 @@
 
 This directory contains support scripts for the `dd4hep` port development
 
-The code itself is [integrated in ATHENA](https://eicweb.phy.anl.gov/EIC/detectors/athena/-/tree/master); the latest development may be found on a dedicated dRICh branch (initial development on `33-detailed-dual-rich-implementation`)
+The code itself is [integrated in ATHENA](https://eicweb.phy.anl.gov/EIC/detectors/athena/-/tree/master)
 
 
 ## Quick Start
