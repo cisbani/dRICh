@@ -6,7 +6,7 @@ import math
 
 
 # ARGUMENTS
-#####################
+################################################################
 
 testNum = -1 
 detector = 'drich'
@@ -20,11 +20,17 @@ helpStr = f'''
 <REQUIRED ARGUMENTS>:
 
     TESTNUM:    -t <testnum>: specify which test to run
-    
-            10:   focal point, in dRICh acceptance
-                    ( recommend: optDbg=1 / mirDbg=0 / sensDbg=1 )
-            11:   focal point, broad range test
-                    ( recommend: optDbg=1 / mirDbg=1 / sensDbg=1 )
+            acceptance tests:
+                1: aim pions at center of aerogel sector
+                2: inner edge test
+                3: outer edge test
+                4: radial scan test
+                5: azimuthal+radial scan test
+            optics tests:
+                10:   focal point, in dRICh acceptance
+                        ( recommend: optDbg=1 / mirDbg=0 / sensDbg=1 )
+                11:   focal point, broad range test
+                        ( recommend: optDbg=1 / mirDbg=1 / sensDbg=1 )
 
 [OPTIONAL ARGUMENTS]
 
@@ -59,11 +65,14 @@ if(testNum<0):
     print('\n\nERROR: test number required, e.g. `-t3`\n',helpStr)
     sys.exit(2)
 
-### override settings for optics test
+### overrides
 if(testNum>=10):
     print("optics test, overriding some settings...")
     particle='opticalphoton'
     runType='vis'
+elif(runType=="vis"):
+    print("override numEvents...")
+    numEvents=1
 
 
 sep='-'*40
@@ -75,8 +84,10 @@ print(f'numEvents = {numEvents}')
 print(f'runType = {runType}')
 print(sep)
 
+################################################################
 
-# set compact file
+
+### set compact file
 if(detector=="athena"):
     compactFile='athena.xml'
 elif(detector=="drich"):
@@ -90,9 +101,33 @@ workDir = os.getcwd()
 m = open(workDir+"/macro/tmp.mac",'w+')
 
 ### common settings
-macroCommon = open(workDir+"/macro/"+runType+"_common.mac",'r')
-for line in macroCommon: m.write(line)
-macroCommon.close()
+m.write(f'/control/verbose 2\n')
+m.write(f'/run/initialize\n')
+
+### visual settings
+if(runType=='vis'):
+
+    m.write(f'/vis/open OGLSQt 800x800-0+0\n') # driver
+
+    m.write(f'/vis/scene/create\n')
+
+    m.write(f'/vis/scene/add/volume\n')
+    m.write(f'/vis/scene/add/axes 0 0 0 1 m\n')
+    m.write(f'/vis/scene/add/trajectories smooth\n')
+    m.write(f'/vis/scene/add/hits\n')
+
+    m.write(f'/vis/sceneHandler/attach\n')
+
+    #m.write(f'/vis/viewer/set/viewpointThetaPhi 115 65\n') # angled view
+    #m.write(f'/vis/viewer/set/viewpointThetaPhi 0 0\n') # front view
+    m.write(f'/vis/viewer/set/viewpointThetaPhi -90 -89\n') # top view
+    #m.write(f'/vis/viewer/set/viewpointThetaPhi 90 0\n') # side view
+    #m.write(f'/vis/viewer/zoom 0.5\n')
+    m.write(f'/vis/viewer/set/style wireframe\n')
+
+    m.write(f'/vis/modeling/trajectories/create/drawByCharge\n')
+    m.write(f'/vis/modeling/trajectories/drawByCharge-0/setRGBA 0 0.4 0 0 1\n')
+
 
 ### set particle energy
 energy = '8.0 GeV'
@@ -111,11 +146,11 @@ m.write(f'/gps/position 0 0 0 cm\n')
 
 ### define envelope acceptance limits [units=cm]
 padding = 5.0
-rMin = 19.0 - padding
+rMin = 19.0 + padding
 rMax = 200.0 - padding
 zMax = 335.0
 
-# derived attributes
+### derived attributes
 thetaMin = math.atan2(rMin,zMax)
 thetaMax = math.atan2(rMax,zMax)
 etaMin = -math.log(math.tan(0.5*thetaMin))
@@ -136,7 +171,17 @@ print(sep)
 
 if( testNum == 1 ):
     m.write(f'\n# aim at +x dRICh sector\n')
-    m.write(f'/gps/direction 0.25 0.0 0.0\n')
+    m.write(f'/gps/direction 0.25 0.0 1.0\n')
+    m.write(f'/run/beamOn {numEvents}\n')
+
+elif( testNum == 2 ):
+    m.write(f'\n# inner edge of acceptance\n')
+    m.write(f'/gps/direction {rMin} 0.0 {zMax}\n')
+    m.write(f'/run/beamOn {numEvents}\n')
+
+elif( testNum == 3 ):
+    m.write(f'\n# outer edge of acceptance\n')
+    m.write(f'/gps/direction {rMax} 0.0 {zMax}\n')
     m.write(f'/run/beamOn {numEvents}\n')
 
 elif( testNum == 10 ):
@@ -168,27 +213,34 @@ else:
     m.close()
     sys.exit(2)
 
+### final info
+if(runType=="vis"):
+    m.write(f'/vis/viewer/flush\n')
+    m.write(f'/vis/viewer/refresh\n')
+
+
+### print macro and close stream
+m.seek(0,0)
+print(m.read())
+print(sep)
+m.close()
+
 #########################################################
 # MACRO FILE BUILT
 
 
-# print macro
-m.seek(0,0)
-print(m.read())
-print(sep)
-
-# set output file
+### set output file
 outputFile = workDir+"/out/sim_"+runType+".root"
 
-# simulation executable and arguments
+### simulation executable and arguments
 cmd = "npsim"
 cmd += " --runType " + runType
 cmd += " --compactFile " + compactFile
-cmd += " --random.seed 1 "
+#cmd += " --random.seed 1 "
 cmd += " --macro " + m.name
 cmd += " --outputFile " + outputFile
 cmd += " --enableG4GPS"
+#if(runType=="vis"): cmd += " --enableQtUI"
 
-# run simulation
-subprocess.call( shlex.split(cmd), cwd = os.environ['DRICH_DD4_ATHENA'] )
-m.close()
+### run simulation
+subprocess.call( shlex.split(cmd), cwd=os.environ['DRICH_DD4_ATHENA'] )
