@@ -173,7 +173,7 @@ int main(int argc, char** argv) {
       );
 
   // pixel hits
-  Double_t pixelXmin = dilation * 125;
+  Double_t pixelXmin = dilation * 115;
   Double_t pixelXmax = dilation * 200;
   Double_t pixelYmin = dilation * -65;
   Double_t pixelYmax = dilation * 65;

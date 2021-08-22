@@ -3,6 +3,7 @@
 import sys, getopt, os, re
 import subprocess, shlex
 import math
+import numpy
 
 
 # ARGUMENTS
@@ -26,6 +27,7 @@ helpStr = f'''
                 3: outer edge test
                 4: radial scan test
                 5: azimuthal+radial scan test
+                6: spray pions in one sector
             optics tests:
                 10:   focal point, in dRICh acceptance
                         ( recommend: optDbg=1 / mirDbg=0 / sensDbg=1 )
@@ -40,13 +42,15 @@ helpStr = f'''
                     - pi+
                     - opticalphoton
                 -n [numEvents]: number of events (usu. at each point)
+                -r: run, instead of visualize (default)
                 -v: visualize, instead of run
+                -h: print help
     '''
 
 if(len(sys.argv)<=1):
     print(helpStr)
     sys.exit(2)
-try: opts, args = getopt.getopt(sys.argv[1:],'t:adp:n:vh')
+try: opts, args = getopt.getopt(sys.argv[1:],'t:adp:n:vrh')
 except getopt.GetoptError:
     print('\n\nERROR: invalid argument\n',helpStr)
     sys.exit(2)
@@ -56,6 +60,7 @@ for opt, arg in opts:
     if(opt=='-d'): detector = 'drich'
     if(opt=='-p'): particle = arg
     if(opt=='-n'): numEvents = int(arg)
+    if(opt=='-r'): runType = 'run'
     if(opt=='-v'): runType = 'vis'
     if(opt=='-h'):
         print(helpStr)
@@ -70,9 +75,6 @@ if(testNum>=10):
     print("optics test, overriding some settings...")
     particle='opticalphoton'
     runType='vis'
-elif(runType=="vis"):
-    print("override numEvents...")
-    numEvents=1
 
 
 sep='-'*40
@@ -127,6 +129,7 @@ if(runType=='vis'):
 
     m.write(f'/vis/modeling/trajectories/create/drawByCharge\n')
     m.write(f'/vis/modeling/trajectories/drawByCharge-0/setRGBA 0 0.4 0 0 1\n')
+    m.write(f'/vis/modeling/trajectories/drawByCharge-0/setRGBA 1 0 0.5 0.5 1\n')
 
 
 ### set particle energy
@@ -184,9 +187,46 @@ elif( testNum == 3 ):
     m.write(f'/gps/direction {rMax} 0.0 {zMax}\n')
     m.write(f'/run/beamOn {numEvents}\n')
 
+elif( testNum == 4 ):
+    numRad = 4 # number of radial steps
+    m.write(f'\n# radial scan test\n')
+    if(runType=="vis"):
+        m.write(f'/vis/scene/endOfEventAction accumulate\n')
+        m.write(f'/vis/scene/endOfRunAction accumulate\n')
+    for r in list(numpy.linspace(rMin,rMax,numRad)):
+        m.write(f'/gps/direction {r} 0.0 {zMax}\n')
+        m.write(f'/run/beamOn {numEvents}\n')
+
+elif( testNum == 5 ):
+    numRad = 5 # number of radial steps
+    numPhi = 30 # number of phi steps, prefer odd multiple of 6 (18,30,42)
+    m.write(f'\n# azimuthal+radial scan test\n')
+    if(runType=="vis"):
+        m.write(f'/vis/scene/endOfEventAction accumulate\n')
+        m.write(f'/vis/scene/endOfRunAction accumulate\n')
+    for r in list(numpy.linspace(rMin,rMax,numRad)):
+        for phi in list(numpy.linspace(0,2*math.pi,numPhi,endpoint=False)):
+            x = r*math.cos(phi)
+            y = r*math.sin(phi)
+            m.write(f'/gps/direction {x} {y} {zMax}\n')
+            m.write(f'/run/beamOn {numEvents}\n')
+
+elif( testNum == 6 ):
+    m.write(f'\n# pion spray test, drich range\n')
+    if(runType=="vis"):
+        m.write(f'/vis/scene/endOfEventAction accumulate\n')
+    m.write(f'/gps/pos/type Point\n')
+    m.write(f'/gps/pos/radius 0.1 mm\n')
+    m.write(f'/gps/ang/type iso\n')
+    m.write(f'/gps/ang/mintheta {math.pi-thetaMax} rad\n')
+    m.write(f'/gps/ang/maxtheta {math.pi-thetaMin} rad\n')
+    m.write(f'/gps/ang/minphi {math.pi} rad\n')
+    m.write(f'/gps/ang/maxphi {math.pi+0.01} rad\n')
+    m.write(f'/run/beamOn {numEvents}\n')
+
 elif( testNum == 10 ):
     m.write(f'\n# opticalphoton scan test, drich range\n')
-    m.write(f'/vis/scene/endOfEventAction accumulate {numEvents}\n')
+    m.write(f'/vis/scene/endOfEventAction accumulate\n')
     m.write(f'/gps/pos/type Point\n')
     m.write(f'/gps/pos/radius 0.1 mm\n')
     m.write(f'/gps/ang/type iso\n')
@@ -198,7 +238,7 @@ elif( testNum == 10 ):
 
 elif( testNum == 11 ):
     m.write(f'\n# opticalphoton scan test, broad range\n')
-    m.write(f'/vis/scene/endOfEventAction accumulate {numEvents}\n')
+    m.write(f'/vis/scene/endOfEventAction accumulate\n')
     m.write(f'/gps/pos/type Point\n')
     m.write(f'/gps/pos/radius 0.1 mm\n')
     m.write(f'/gps/ang/type iso\n')
