@@ -6,3 +6,4 @@ macro/tmp.mac
 *.exe
 fieldmaps/*
 doc/*
+*.png

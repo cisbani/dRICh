@@ -16,7 +16,9 @@ void drawHits(TString infileN="out/sim_run.root") {
   canv->SetLogz();
   canv->SetGrid(1,1);
   hitsHist->Draw("colz");
-  //hitsHist->GetXaxis()->SetRangeUser(120,200);
-  //hitsHist->GetYaxis()->SetRangeUser(-40,40);
-  canv->Print("out/hits.png");
+  hitsHist->GetXaxis()->SetRangeUser(100,200);
+  hitsHist->GetYaxis()->SetRangeUser(-40,40);
+  TString outImage = infileN;
+  outImage(TRegexp("\\.root$"))=".png";
+  canv->Print(outImage);
 };

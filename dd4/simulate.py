@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# npsim wrapper with dRICh specific tests
+
 import sys, getopt, os, re
 import subprocess, shlex
 import math
@@ -14,6 +16,7 @@ detector = 'drich'
 particle = 'pi+'
 runType = 'run'
 numEvents = 10
+outputFileName = ''
 
 helpStr = f'''
 {sys.argv[0]} <TESTNUM> [OPTIONS]
@@ -44,13 +47,14 @@ helpStr = f'''
                 -n [numEvents]: number of events (usu. at each point)
                 -r: run, instead of visualize (default)
                 -v: visualize, instead of run
+                -o [output file]: output root file name (will appear in out/ directory)
                 -h: print help
     '''
 
 if(len(sys.argv)<=1):
     print(helpStr)
     sys.exit(2)
-try: opts, args = getopt.getopt(sys.argv[1:],'t:adp:n:vrh')
+try: opts, args = getopt.getopt(sys.argv[1:],'t:adp:n:vro:h')
 except getopt.GetoptError:
     print('\n\nERROR: invalid argument\n',helpStr)
     sys.exit(2)
@@ -61,6 +65,7 @@ for opt, arg in opts:
     if(opt=='-p'): particle = arg
     if(opt=='-n'): numEvents = int(arg)
     if(opt=='-r'): runType = 'run'
+    if(opt=='-o'): outputFileName = arg
     if(opt=='-v'): runType = 'vis'
     if(opt=='-h'):
         print(helpStr)
@@ -105,6 +110,7 @@ m = open(workDir+"/macro/tmp.mac",'w+')
 ### common settings
 m.write(f'/control/verbose 2\n')
 m.write(f'/run/initialize\n')
+#m.write(f'/run/useMaximumLogicalCores\n')
 
 ### visual settings
 if(runType=='vis'):
@@ -270,7 +276,8 @@ m.close()
 
 
 ### set output file
-outputFile = workDir+"/out/sim_"+runType+".root"
+if outputFileName=='': outputFileName = "sim_"+runType+".root"
+outputFile = workDir+"/out/"+outputFileName
 
 ### simulation executable and arguments
 cmd = "npsim"
@@ -283,4 +290,7 @@ cmd += " --enableG4GPS"
 #if(runType=="vis"): cmd += " --enableQtUI"
 
 ### run simulation
+print(sep)
+print(cmd)
+print(sep)
 subprocess.call( shlex.split(cmd), cwd=os.environ['DRICH_DD4_ATHENA'] )

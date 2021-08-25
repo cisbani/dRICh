@@ -21,9 +21,9 @@ def sep(): print('-'*40)
 def dictPrint(d): print(json.dumps(d,indent=4))
 it = {}
 i=0
-it['centerX'] = list(np.linspace( tankRadius-20, tankRadius+20, 3 ))
-it['centerZ'] = list(np.linspace( -90, 30, 5 ))
-it['retune'] = list(np.linspace( 0.0, 0.6, 4 ))
+it['retune'] = list(np.linspace( 0.1, 0.3, 3 ))
+it['centerZ'] = list(np.linspace( -50, 0, 6 ))
+it['centerX'] = list(np.linspace( tankRadius+10, tankRadius+30, 3 ))
 dictPrint(it)
 sep()
 print('i testName retune centerZ centerX radius')
@@ -31,11 +31,7 @@ for retune in it['retune']:
     for centerZ in it['centerZ']:
         for centerX in it['centerX']:
             sep()
-            it['radius'] = list(np.linspace(
-                snoutLength - centerZ + 10,
-                vesselLength - centerZ - 10,
-                4
-                ))
+            it['radius'] = list(np.linspace( snoutLength - centerZ + 40, vesselLength - centerZ - 40, 4 ))
             for radius in it['radius']:
 
                 # set test name
@@ -72,3 +68,19 @@ for retune in it['retune']:
                 i+=1
 
 compactInFile.close()
+
+
+# iteration 1:
+#it['retune'] = list(np.linspace( 0.0, 0.6, 4 ))
+#it['centerZ'] = list(np.linspace( -90, 30, 5 ))
+#it['centerX'] = list(np.linspace( tankRadius-20, tankRadius+20, 3 ))
+#it['radius'] = list(np.linspace( snoutLength - centerZ + 10, vesselLength - centerZ - 10, 4 ))
+
+# best:
+# 0.2__-30.0__220.0__126.7
+
+# iteration 2
+#it['retune'] = list(np.linspace( 0.1, 0.3, 3 ))
+#it['centerZ'] = list(np.linspace( -50, 0, 6 ))
+#it['centerX'] = list(np.linspace( tankRadius+10, tankRadius+30, 3 ))
+#it['radius'] = list(np.linspace( snoutLength - centerZ + 40, vesselLength - centerZ - 40, 4 ))
