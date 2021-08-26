@@ -79,8 +79,37 @@ compactInFile.close()
 # best:
 # 0.2__-30.0__220.0__126.7
 
-# iteration 2
+# iteration 2:
 #it['retune'] = list(np.linspace( 0.1, 0.3, 3 ))
 #it['centerZ'] = list(np.linspace( -50, 0, 6 ))
 #it['centerX'] = list(np.linspace( tankRadius+10, tankRadius+30, 3 ))
 #it['radius'] = list(np.linspace( snoutLength - centerZ + 40, vesselLength - centerZ - 40, 4 ))
+
+# best:
+
+# 0.1__-20.0__210.0__110.0
+# 0.1__-30.0__210.0__120.0
+# 0.1__-40.0__210.0__130.0
+# 0.1__-50.0__210.0__140.0
+
+# 0.2__-30.0__210.0__120.0
+# 0.2__-20.0__220.0__126.7
+
+# 0.1__-40.0__220.0__130.0
+# 0.2__-40.0__220.0__130.0
+
+# 0.1__-50.0__220.0__140.0
+# 0.2__-50.0__220.0__140.0
+# 0.3__-50.0__220.0__140.0
+
+# trends:
+# - radius + centerZ = 90
+# - centerX ~ 210-220
+
+# comparisons
+# - centerX 210 vs. 220:
+#   sim-test__0.1__-40.0__2*.png
+#   sim-test__0.1__-50.0__2*.png
+# - retune:
+#   *__-40.0__220.0__130.0.png
+#   *__-50.0__220.0__140.0.png

@@ -1,5 +1,5 @@
 #!/bin/bash
-# dumps parameter values from compact files, given search term
+# return parameter value(s) from compact files, given search term
 
 if [ $# -ne 1 ]; then
   echo "USAGE: $0 [search term (case sensitive)]"
