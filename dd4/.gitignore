@@ -1,4 +1,9 @@
 *.sw*
 *.root
 out/*
-
+*.log
+macro/tmp.mac
+*.exe
+fieldmaps/*
+doc/*
+*.png
