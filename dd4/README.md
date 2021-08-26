@@ -14,7 +14,7 @@ The code itself is [integrated in ATHENA](https://eicweb.phy.anl.gov/EIC/detecto
 - `source environ.sh` to set the environment (many scripts call this
   automatically)
 - `buildATHENA.sh` to build the detector(s), and runs `dd_web_display` to
-  produces a `root` file in the `athena` directory
+  produces a `root` file in the `out/` directory
 - to view this file, open an instance of `jsroot` 
   (e.g., [here](https://eic.phy.anl.gov/geoviewer/)) and open the 
   resulting `root` file
@@ -61,7 +61,8 @@ The code itself is [integrated in ATHENA](https://eicweb.phy.anl.gov/EIC/detecto
 Note: to build C++ code, type `make` (best if you are in the Singularity
 container) which will produce `*.exe` executables
 
-- `buildAthena.sh`: builds the full ATHENA detector, or just the dRICh
+- `buildAthena.sh`: builds the full ATHENA detector, or just the dRICh,
+  and produces geometry file in `out/`, which is best viewed with `jsroot`
 - `drawHits.cpp` and `drawSegmentation.cpp`
   - both of these are used to explore the dRICh hits readout, and
     represent examples of how to analyze the simulation output
