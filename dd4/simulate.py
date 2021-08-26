@@ -5,7 +5,7 @@
 import sys, getopt, os, re
 import subprocess, shlex
 import math
-import numpy
+import numpy as np
 
 
 # ARGUMENTS
@@ -31,6 +31,7 @@ helpStr = f'''
                 4: radial scan test
                 5: azimuthal+radial scan test
                 6: spray pions in one sector
+                7: momentum scan
             optics tests:
                 10:   focal point, in dRICh acceptance
                         ( recommend: optDbg=1 / mirDbg=0 / sensDbg=1 )
@@ -146,7 +147,7 @@ if(particle=="opticalphoton"): energy = '3.0 eV'
 m.write(f'/gps/verbose 2\n')
 m.write(f'/gps/particle {particle}\n')
 m.write(f'/gps/number 1\n')
-m.write(f'/gps/ene/mono {energy}\n')
+if(testNum!=7): m.write(f'/gps/ene/mono {energy}\n')
 #m.write(f'/gps/ene/type Gauss\n')
 #m.write(f'/gps/ene/sigma 3.0 GeV\n')
 
@@ -199,7 +200,7 @@ elif( testNum == 4 ):
     if(runType=="vis"):
         m.write(f'/vis/scene/endOfEventAction accumulate\n')
         m.write(f'/vis/scene/endOfRunAction accumulate\n')
-    for r in list(numpy.linspace(rMin,rMax,numRad)):
+    for r in list(np.linspace(rMin,rMax,numRad)):
         m.write(f'/gps/direction {r} 0.0 {zMax}\n')
         m.write(f'/run/beamOn {numEvents}\n')
 
@@ -210,8 +211,8 @@ elif( testNum == 5 ):
     if(runType=="vis"):
         m.write(f'/vis/scene/endOfEventAction accumulate\n')
         m.write(f'/vis/scene/endOfRunAction accumulate\n')
-    for r in list(numpy.linspace(rMin,rMax,numRad)):
-        for phi in list(numpy.linspace(0,2*math.pi,numPhi,endpoint=False)):
+    for r in list(np.linspace(rMin,rMax,numRad)):
+        for phi in list(np.linspace(0,2*math.pi,numPhi,endpoint=False)):
             x = r*math.cos(phi)
             y = r*math.sin(phi)
             m.write(f'/gps/direction {x} {y} {zMax}\n')
@@ -229,6 +230,13 @@ elif( testNum == 6 ):
     m.write(f'/gps/ang/minphi {math.pi} rad\n')
     m.write(f'/gps/ang/maxphi {math.pi+0.01} rad\n')
     m.write(f'/run/beamOn {numEvents}\n')
+
+elif( testNum == 7 ):
+    m.write(f'\n# momentum scan\n')
+    m.write(f'/gps/direction 0.25 0.0 1.0\n')
+    for en in list(np.linspace(1,30,10)):
+        m.write(f'/gps/ene/mono {en} GeV\n')
+        m.write(f'/run/beamOn {numEvents}\n')
 
 elif( testNum == 10 ):
     m.write(f'\n# opticalphoton scan test, drich range\n')
