@@ -11,7 +11,7 @@
 #include "TApplication.h"
 #include "TBox.h"
 #include "ROOT/RDataFrame.hxx"
-#include "ROOT/RDFHelpers.hxx" // for RDF::RunGraphs
+//#include "ROOT/RDFHelpers.hxx" // for RDF::RunGraphs
 
 using std::cout;
 using std::cerr;
@@ -60,14 +60,14 @@ int main(int argc, char** argv) {
     xSens = (Long64_t)(dilation*xSensF+0.5);
     ySens = (Long64_t)(dilation*ySensF+0.5);
     modCoordMap.insert(std::pair<Long64_t,std::pair<Long64_t,Long64_t>>(
-        moduleSens, std::pair<Long64_t,Long64_t>(xSens,ySens)
-	));
+          moduleSens, std::pair<Long64_t,Long64_t>(xSens,ySens)
+          ));
     boxList.push_back(new TBox(
-	xSens,
-	ySens,
-	xSens + numPx,
-	ySens + numPx
-	));
+          xSens,
+          ySens,
+          xSens + numPx,
+          ySens + numPx
+          ));
   };
   
 
@@ -75,6 +75,8 @@ int main(int argc, char** argv) {
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   // decode cellID vector, given offset and length
+  // TODO: replace with dd4hep::rec::CellIDPositionConverter 
+  // (see https://eicweb.phy.anl.gov/EIC/tutorials/ip6_tutorial_1/-/blob/master/scripts/tutorial1_hit_position.cxx)
   auto decodeID = [] (lvec ids, int offset, int length) {
     Long64_t div = (Long64_t) pow(2,offset);
     Long64_t mask = (Long64_t) pow(2,length) - 1;
@@ -112,8 +114,8 @@ int main(int argc, char** argv) {
     for(auto m : mods) {
       try { pos = (c==0) ? modCoordMap[m].first : modCoordMap[m].second; } 
       catch (const std::out_of_range &ex) {
-	cerr << "ERROR: cannot find module " << m << endl;
-	pos = 0;
+        cerr << "ERROR: cannot find module " << m << endl;
+        pos = 0;
       };
       result.emplace_back(pos);
     };
@@ -168,7 +170,7 @@ int main(int argc, char** argv) {
   auto yHist = dfFinal.Histo1D("segY");
   auto sectorVsXY = dfFinal.Histo3D(
       { "sectorVsXY","sector vs. xy;x;y;sec",
-	200,-2000,2000,200,-2000,2000,6,0,6 },
+      200,-2000,2000,200,-2000,2000,6,0,6 },
       "DRICHHits.position.x","DRICHHits.position.y","sec"
       );
 
@@ -181,12 +183,12 @@ int main(int argc, char** argv) {
       { "pixelHits","pixel hits;x;y;sector",
         (Int_t)(pixelXmax-pixelXmin), pixelXmin, pixelXmax,
         (Int_t)(pixelYmax-pixelYmin), pixelYmin, pixelYmax,
-	6,0,6 },
+        6,0,6 },
       "pixelX","pixelY","sec"
       );
 
   // execute concurrently
-  RDF::RunGraphs({ detHist, secHist, modHist, xHist, yHist, pixelHits });
+  //RDF::RunGraphs({ detHist, secHist, modHist, xHist, yHist, pixelHits });
 
 
   // execution
