@@ -513,7 +513,7 @@ public:
 
       scaledE[i]=ee;
       scaledN[i]=(Asel[igas]/1e6/(l02 - 1./(wl/nm)/(wl/nm))+1.) * refn/rnscale;
-      scaledA[i]=100.*cm;    // @@@@
+      scaledA[i]=10.*m;    // @@@@
       scaledS[i]=100000.*cm; // @@@@
     }
 
