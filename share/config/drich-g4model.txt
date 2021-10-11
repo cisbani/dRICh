@@ -62,7 +62,8 @@
 
 :P aerogelDensity 0.1
 
-:P gasDensity 0.005734
+:P gasDensity 0.005734 // C2F6
+//:P gasDensity 0.009935 // C4F10
 
 :P acrylicFilterThickness 0.32*mm
 
@@ -115,9 +116,15 @@
       G4_PLEXIGLASS 0.99
       G4_POLYVINYL_ACETATE 0.01
 
+// C2F6
 :MIXT_BY_NATOMS ciDRICHgasMat $gasDensity 2
       C 2
       F 6
+
+// C4F10
+//:MIXT_BY_NATOMS ciDRICHgasMat $gasDensity 2
+//    C 4
+//    F 10
 
 // acrylic material **To Be Improved**
 :MIXT_BY_WEIGHT ciDRICHmirrorMat 1.19 2

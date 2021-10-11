@@ -464,23 +464,33 @@ public:
       { 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm, 100*cm };
 
     // different gas types parameters
-    G4String gasType[] = { "C2F6", "CF4" };
+    G4String gasType[] = { "C2F6", "CF4", "C4F10" };
+
+    // absorption lengths
+    // C2F6 and CF4: assumed to be 10m
+    // C4F10: 6m, for wavelength 200-700 nm (ATLAS note Simulation of ATLAS Luminosity Monitoring with LUCID)
+    const double absLength[] = { 10.*m, 10.*m, 6.*m };
 
     // A.W. Burner and W. K. Goad - Measurement of the Specific Refractivities of CF4 and C2F6
     // for gases: n-1 = K*rho : K=specific refractivity or Gladstone-Dale constant
     // C2F6: rho = 5.7 kg/m^3, K=0.131 cm^3/g +/- 0.0009 cm^3/g at 300 K, lambda=633 nm
     // CF4:  rho = 7.2 kg/m^3, K=0.122 cm^3/g +/- 0.0009 cm^3/g at 300 K, lambda=633 nm   
-    double Ksr[]={ 0.131*cm3/g, 0.122*cm3/g };
+    //
+    // C4F10: rho = 9.935 kg/m3 at 25°C and 1 atm // NICNAS file NA/317 (1996), perfluorobutane
+    //                                            // PFG-5040 3M
+    //        K = ??? (TODO; density-dependence disabled for now)
+    double Ksr[]={ 0.131*cm3/g, 0.122*cm3/g, 0.000*cm3/g };
     
     // One term Sellmeier formula: n-1 = A*10^-6 / (l0^-2 - l^-2)
     // C2F6: A=0.18994, l0 = 65.47 [nm] (wavelength, E0=18.82 eV)  :  NIMA 354 (1995) 417-418
     // CF4: A=0.124523, l0=61.88 nm (E0=20.04 eV) : NIMA 292 (1990) 593-594
-    double Asel[]={0.18994, 0.124523};
-    double L0sel[]={65.47*nm, 61.88*nm};
+    // C4F10: A=0.2375, l0=73.63 nm (E0=16.84 eV) : NIMA 510 (2003) 262–272
+    double Asel[]={0.18994, 0.124523, 0.2375};
+    double L0sel[]={65.47*nm, 61.88*nm, 73.63*nm};
 
     int igas=0;
 
-    for (int i=0;i<2;i++) {
+    for (int i=0;i<3;i++) {
       if (chemFormula == gasType[i]) igas=i;
     }
 
@@ -505,6 +515,7 @@ public:
     double l02 = 1./(L0sel[igas]/nm)/(L0sel[igas]/nm);
       
     double rnscale = Asel[igas]/1e6/(l02 - 1./(wlref/nm)/(wlref/nm))+1.;
+    if(chemFormula=="C4F10") rnscale = refn; // disable density-dependent refractive index
     
     for (int i=0;i<nEntries;i++) {
 
@@ -513,7 +524,7 @@ public:
 
       scaledE[i]=ee;
       scaledN[i]=(Asel[igas]/1e6/(l02 - 1./(wl/nm)/(wl/nm))+1.) * refn/rnscale;
-      scaledA[i]=10.*m;    // @@@@
+      scaledA[i]=absLength[igas];    // @@@@
       scaledS[i]=100000.*cm; // @@@@
     }
 
